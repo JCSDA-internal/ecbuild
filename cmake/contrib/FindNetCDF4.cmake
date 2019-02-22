@@ -122,6 +122,22 @@ endif()
 set( NETCDF_IS_PARALLEL TRUE CACHE BOOL
     "NETCDF library compiled with parallel IO support" )
 
+set(output "no")
+_NETCDF_CONFIG (--has-hdf4 output return)
+set(HAS_HDF4 FALSE)
+
+if(${output} STREQUAL yes)
+  set(HAS_HDF4 TRUE)
+  set(HDF4_FIND_QUIETLY ${NETCDF_FIND_QUIETLY})
+  set(HDF4_FIND_REQUIRED ${NETCDF_FIND_REQUIRED})
+  find_package(HDF4)
+endif()
+
+# Check for NETCDF_INCLUDE_DIRS and NETCDF_LIBRARIES in environment
+if( (DEFINED ENV{NETCDF_INCLUDE_DIRS}) AND (DEFINED ENV{NETCDF_LIBRARIES}) )
+    set( NETCDF_INCLUDE_DIRS $ENV{NETCDF_INCLUDE_DIRS} )
+    set( NETCDF_LIBRARIES $ENV{NETCDF_LIBRARIES} )
+endif()
 
 if( NETCDF_INCLUDE_DIRS AND NETCDF_LIBRARIES )
     # Do nothing: we already have NETCDF_INCLUDE_PATH and NETCDF_LIBRARIES in the

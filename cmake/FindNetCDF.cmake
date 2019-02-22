@@ -78,7 +78,7 @@ if( PREFER_NETCDF4 )
 
   # Note: Only the HDF5 C-library is required for NetCDF
   #       ( even for Fortan and CXX bindings)
-  find_package( HDF5 COMPONENTS C QUIET )
+  find_package( HDF5 COMPONENTS C HL QUIET )
 
   ## netcdf4
 
@@ -113,6 +113,12 @@ if( PREFER_NETCDF4 )
     # list( APPEND NETCDF_DEFINITIONS  ${HDF5_DEFINITIONS} )
     list( APPEND NETCDF_LIBRARIES    ${HDF5_HL_LIBRARIES} ${HDF5_LIBRARIES}  )
     list( APPEND NETCDF_INCLUDE_DIRS ${HDF5_INCLUDE_DIRS} )
+  endif()
+
+  if( NETCDF_FOUND AND HDF4_FOUND )
+    # list( APPEND NETCDF_DEFINITIONS  ${HDF4_DEFINITIONS} )
+    list( APPEND NETCDF_LIBRARIES    ${HDF4_LIBRARIES}  )
+    list( APPEND NETCDF_INCLUDE_DIRS ${HDF4_INCLUDE_DIRS} )
   endif()
 
   #ecbuild_debug_var( NETCDF_FOUND )
