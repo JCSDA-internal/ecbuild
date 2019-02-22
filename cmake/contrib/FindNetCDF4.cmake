@@ -186,6 +186,7 @@ else()
                     ENV NETCDF_ROOT ENV NETCDF_DIR ENV NETCDF_PATH ENV NETCDF4_DIR
               PATH_SUFFIXES
                   include
+                  include/netcdf
                   Include
           )
           if( NOT NETCDF_${INC}_INCLUDE_DIR )
@@ -201,6 +202,7 @@ else()
                     ENV NETCDF_ROOT ENV NETCDF_DIR ENV NETCDF_PATH ENV NETCDF4_DIR
               PATH_SUFFIXES
                   include
+                  include/netcdf
                   Include
             )
           endif()
