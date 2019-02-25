@@ -42,7 +42,7 @@
 #  NETCDF_FOUND - true if NETCDF was found on the system
 #  NETCDF_LIBRARY_DIRS - the full set of library directories
 #  NETCDF_IS_PARALLEL - Whether or not NETCDF was found with parallel IO support
-#  NETCDF_C_CONFIG_EXECUTABLE - the path to the NC-CONFIG tool
+#  NETCDF_CONFIG_EXECUTABLE - the path to the NC-CONFIG tool
 #  NETCDF_F_CONFIG_EXECUTABLE - the path to the NF-CONFIG tool
 
 #=============================================================================
@@ -71,11 +71,11 @@ set( NETCDF_VALID_COMPONENTS
     C
 )
 
-# Invoke the NETCDF C wrapper compiler.  The compiler return value is stored to the
+# Invoke the NETCDF wrapper compiler.  The compiler return value is stored to the
 # return_value argument, the text output is stored to the output variable.
-macro( _NETCDF_C_CONFIG flag output return_value )
-    if( NETCDF_C_CONFIG_EXECUTABLE )
-        exec_program( ${NETCDF_C_CONFIG_EXECUTABLE}
+macro( _NETCDF_CONFIG flag output return_value )
+    if( NETCDF_CONFIG_EXECUTABLE )
+        exec_program( ${NETCDF_CONFIG_EXECUTABLE}
             ARGS ${flag}
             OUTPUT_VARIABLE ${output}
             RETURN_VALUE ${return_value}
@@ -107,15 +107,15 @@ macro( _NETCDF_F_CONFIG flag output return_value )
     endif()
 endmacro()
 #
-# try to find the NETCDF C wrapper compilers
-find_program( NETCDF_C_CONFIG_EXECUTABLE
+# try to find the NETCDF wrapper compilers
+find_program( NETCDF_CONFIG_EXECUTABLE
     NAMES nc-config
     HINTS ${NETCDF_ROOT} ${NETCDF_DIR} ${NETCDF_PATH} ${NETCDF4_DIR}
           ENV NETCDF_ROOT ENV NETCDF_DIR ENV NETCDF_PATH ENV NETCDF4_DIR
     PATH_SUFFIXES bin Bin
-    DOC "NETCDF C CONFIG PROGRAM.  Used only to detect NETCDF C compile flags." )
-mark_as_advanced( NETCDF_C_CONFIG_EXECUTABLE )
-ecbuild_debug("FindNetCDF4: nc-config executable = ${NETCDF_C_CONFIG_EXECUTABLE}")
+    DOC "NETCDF CONFIG PROGRAM.  Used only to detect NETCDF compile flags." )
+mark_as_advanced( NETCDF_CONFIG_EXECUTABLE )
+ecbuild_debug("FindNetCDF4: nc-config executable = ${NETCDF_CONFIG_EXECUTABLE}")
 #
 # try to find the NETCDF Fortran wrapper compilers
 find_program( NETCDF_F_CONFIG_EXECUTABLE
@@ -126,6 +126,17 @@ find_program( NETCDF_F_CONFIG_EXECUTABLE
     DOC "NETCDF Fortran CONFIG PROGRAM.  Used only to detect NETCDF Fortran compile flags." )
 mark_as_advanced( NETCDF_F_CONFIG_EXECUTABLE )
 ecbuild_debug("FindNetCDF4: nf-config executable = ${NETCDF_F_CONFIG_EXECUTABLE}")
+
+set(output "no")
+_NETCDF_CONFIG (--has-pnetcdf output return)
+if(${output} STREQUAL yes)
+  set (NETCDF_IS_PARALLEL TRUE)
+else()
+#   set(NETCDF_IS_PARALLEL FALSE)
+endif()
+set( NETCDF_IS_PARALLEL TRUE CACHE BOOL
+    "NETCDF library compiled with parallel IO support" )
+
 
 if( NETCDF_INCLUDE_DIRS AND NETCDF_LIBRARIES )
     # Do nothing: we already have NETCDF_INCLUDE_DIRS and NETCDF_LIBRARIES in the
@@ -156,9 +167,9 @@ else()
         # find the NETCDF includedir
         set(output "no")
         if( ${LANGUAGE} STREQUAL C )
-          _NETCDF_C_CONFIG (--includedir output return)
+          _NETCDF_CONFIG (--includedir output return)
         elseif( ${LANGUAGE} STREQUAL CXX )
-          _NETCDF_C_CONFIG (--includedir output return)
+          _NETCDF_CONFIG (--includedir output return)
         elseif( ${LANGUAGE} STREQUAL FORTRAN OR ${LANGUAGE} STREQUAL F90 )
           _NETCDF_F_CONFIG (--includedir output return)
         endif()
@@ -171,9 +182,9 @@ else()
         # find the NETCDF libraries
         set(output "no")
         if( ${LANGUAGE} STREQUAL C )
-          _NETCDF_C_CONFIG (--libs output return)
+          _NETCDF_CONFIG (--libs output return)
         elseif( ${LANGUAGE} STREQUAL CXX )
-          _NETCDF_C_CONFIG (--libs output return)
+          _NETCDF_CONFIG (--libs output return)
         elseif( ${LANGUAGE} STREQUAL FORTRAN OR ${LANGUAGE} STREQUAL F90 )
           _NETCDF_F_CONFIG (--flibs output return)
         endif()
@@ -182,21 +193,21 @@ else()
         else()
           string(REGEX MATCHALL "-L[^ ]*" _LIBRARY_DIRS_ALL "${output}")
           list( REMOVE_DUPLICATES _LIBRARY_DIRS_ALL )
-          set (_LIBRARY_DIRS)
+          set (NETCDF_${LANGUAGE}_LIBRARY_DIRS)
           foreach (libdir ${_LIBRARY_DIRS_ALL})
             string (REPLACE "-L" "" _tmp ${libdir})
             string (STRIP ${_tmp} _tmp)
-            list (APPEND _LIBRARY_DIRS ${_tmp})
+            list (APPEND NETCDF_${LANGUAGE}_LIBRARY_DIRS ${_tmp})
           endforeach()
           string(REGEX MATCHALL " -l[^ ]*" _LIBRARY_NAMES_ALL "${output}")
           list( REMOVE_DUPLICATES _LIBRARY_NAMES_ALL )
-          set (_LIBRARY_NAMES)
+          set (NETCDF_${LANGUAGE}_LIBRARY_NAMES)
           foreach (lib ${_LIBRARY_NAMES_ALL})
             string (REPLACE "-l" "" _tmp ${lib})
             string (STRIP ${_tmp} _tmp)
-            list (APPEND _LIBRARY_NAMES ${_tmp})
+            list (APPEND NETCDF_${LANGUAGE}_LIBRARY_NAMES ${_tmp})
           endforeach()
-          foreach( LIB ${_LIBRARY_NAMES} )
+          foreach( LIB ${NETCDF_${LANGUAGE}_LIBRARY_NAMES} )
             if( UNIX AND NETCDF_USE_STATIC_LIBRARIES )
                 # According to bug 1643 on the CMake bug tracker, this is the
                 # preferred method for searching for a static library.
@@ -211,10 +222,10 @@ else()
             endif()
             find_library( NETCDF_${LIB}_LIBRARY_DEBUG
                 NAMES ${THIS_LIBRARY_SEARCH_DEBUG}
-                HINTS ${_LIBRARY_DIRS} )
+                HINTS ${NETCDF_${LANGUAGE}_LIBRARY_DIRS})
             find_library( NETCDF_${LIB}_LIBRARY_RELEASE
                 NAMES ${THIS_LIBRARY_SEARCH_RELEASE}
-                HINTS ${_LIBRARY_DIRS} )
+                HINTS ${NETCDF_${LANGUAGE}_LIBRARY_DIRS})
             select_library_configurations( NETCDF_${LIB} )
             # even though we adjusted the individual library names in
             # select_library_configurations, we still need to distinguish
@@ -248,7 +259,7 @@ else()
             endif()
           endforeach()
         endif()
-        list( APPEND NETCDF_LIBRARY_DIRS ${_LIBRARY_DIRS} )
+        list( APPEND NETCDF_LIBRARY_DIRS ${NETCDF_${LANGUAGE}_LIBRARY_DIRS} )
 
         # Append the libraries for this language binding to the list of all
         # required libraries.
