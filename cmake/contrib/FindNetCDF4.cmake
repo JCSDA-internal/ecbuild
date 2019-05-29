@@ -99,6 +99,12 @@ mark_as_advanced( NETCDF_CONFIG_EXECUTABLE )
 ecbuild_debug("FindNetCDF4: nc-config executable = ${NETCDF_CONFIG_EXECUTABLE}")
 
 set(output "no")
+_NETCDF_CONFIG (--has-parallel output return)
+if(${output} STREQUAL yes)
+  set (NETCDF_IS_PARALLEL TRUE)
+endif()
+
+set(output "no")
 _NETCDF_CONFIG (--has-pnetcdf output return)
 if(${output} STREQUAL yes)
   set (NETCDF_IS_PARALLEL TRUE)
