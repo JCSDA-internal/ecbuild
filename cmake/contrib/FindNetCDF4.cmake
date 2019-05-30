@@ -98,27 +98,25 @@ find_program( NETCDF_CONFIG_EXECUTABLE
 mark_as_advanced( NETCDF_CONFIG_EXECUTABLE )
 ecbuild_debug("FindNetCDF4: nc-config executable = ${NETCDF_CONFIG_EXECUTABLE}")
 
+#Use nc-config to check for parallel support for v4 files.
 set(output "no")
-_NETCDF_CONFIG (--has-parallel4 output return)
+_NETCDF_CONFIG (--has-parallel4 output return) #available with NetCDF>=4.7.0
 if(${output} STREQUAL yes)
-  set (NETCDF_IS_PARALLEL TRUE)
-endif()
-
-set(output "no")
-_NETCDF_CONFIG (--has-parallel output return)
-if(${output} STREQUAL yes)
-  set (NETCDF_IS_PARALLEL TRUE)
-endif()
-
-set(output "no")
-_NETCDF_CONFIG (--has-pnetcdf output return)
-if(${output} STREQUAL yes)
-  set (NETCDF_IS_PARALLEL TRUE)
+    set(NETCDF_IS_PARALLEL TRUE)
 else()
-#   set(NETCDF_IS_PARALLEL FALSE)
+    set(output "no")
+    _NETCDF_CONFIG (--has-parallel output return)
+    if(${output} STREQUAL yes)
+        #NOTE: With NetCDF<4.7.0 This may be set to true when only v3 parallel support is available.
+        #currently there is no way to completely disambiguate v3 and v4 parallel support for <4.7.0
+        set(NETCDF_IS_PARALLEL TRUE)
+    else()
+        set(NETCDF_IS_PARALLEL FALSE)
+    endif()
 endif()
-set( NETCDF_IS_PARALLEL TRUE CACHE BOOL
-    "NETCDF library compiled with parallel IO support" )
+
+set(NETCDF_IS_PARALLEL ${NETCDF_IS_PARALLEL} CACHE BOOL
+    "NETCDF library compiled with parallel IO support." )
 
 
 if( NETCDF_INCLUDE_DIRS AND NETCDF_LIBRARIES )
