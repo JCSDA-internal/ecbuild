@@ -4,11 +4,8 @@
 #
 # - Find NETCDF, a library for reading and writing self describing array data.
 #
-# This module invokes the NETCDF wrapper compiler that should be installed
-# alongside NETCDF.  Depending upon the NETCDF Configuration, the wrapper compiler
-# is called either h5cc or h5pcc.  If this succeeds, the module will then call
-# the compiler with the -show argument to see what flags are used when compiling
-# an NETCDF client application.
+# This module invokes the NETCDF "nc-config" script that is provided by the 
+# NetCDF4 package.
 #
 # The module will optionally accept the COMPONENTS argument.  If no COMPONENTS
 # are specified, then the find module will default to finding only the NETCDF C
@@ -42,6 +39,7 @@
 #  NETCDF_FOUND - true if NETCDF was found on the system
 #  NETCDF_LIBRARY_DIRS - the full set of library directories
 #  NETCDF_IS_PARALLEL - Whether or not NETCDF was found with parallel IO support
+#                       for version 4 files via a parallel HDF5 library.
 #  NETCDF_CONFIG_EXECUTABLE - the path to the NC-CONFIG tool
 
 #=============================================================================
@@ -116,7 +114,7 @@ else()
 endif()
 
 set(NETCDF_IS_PARALLEL ${NETCDF_IS_PARALLEL} CACHE BOOL
-    "NETCDF library compiled with parallel IO support." )
+    "NETCDF library compiled with parallel IO support for version 4 files." )
 
 
 if( NETCDF_INCLUDE_DIRS AND NETCDF_LIBRARIES )
