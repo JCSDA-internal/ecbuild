@@ -36,10 +36,18 @@ else()
 endif()
 
 # Search with priority for MKLROOT, MKL_PATH and MKL_ROOT if set in CMake or env
-find_path(MKL_INCLUDE_DIR mkl.h
+if( MKL_Fortran )
+  set( __mkl_inc_names mkl_blas.f90 )
+else()
+  set( __mkl_inc_names mkl.h )
+endif ()
+
+find_path(MKL_INCLUDE_DIR
+          NAMES ${__mkl_inc_names}
           PATHS ${MKLROOT} ${MKL_PATH} ${MKL_ROOT} ENV MKLROOT ENV MKL_PATH ENV MKL_ROOT
           PATH_SUFFIXES include NO_DEFAULT_PATH)
-find_path(MKL_INCLUDE_DIR mkl.h
+find_path(MKL_INCLUDE_DIR
+	  NAMES ${__mkl_inc_names}
           PATH_SUFFIXES include)
 
 if( MKL_INCLUDE_DIR ) # use include dir to find libs
@@ -47,7 +55,11 @@ if( MKL_INCLUDE_DIR ) # use include dir to find libs
   set( MKL_INCLUDE_DIRS ${MKL_INCLUDE_DIR} )
 
   if( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" )
-    get_filename_component( MKL_LIB_PATH ${MKL_INCLUDE_DIR}/../lib/intel64 ABSOLUTE )
+    if( APPLE )
+      get_filename_component( MKL_LIB_PATH ${MKL_INCLUDE_DIR}/../lib ABSOLUTE )
+    else()
+      get_filename_component( MKL_LIB_PATH ${MKL_INCLUDE_DIR}/../lib/intel64 ABSOLUTE )
+    endif()
     set( __libsfx _lp64 )
   else()
     get_filename_component( MKL_LIB_PATH ${MKL_INCLUDE_DIR}/../lib/ia32 ABSOLUTE )
