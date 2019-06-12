@@ -303,7 +303,9 @@ macro( ecbuild_use_package )
       ecbuild_debug_var( _p_FAILURE_MSG )
       list( APPEND _opts FAILURE_MSG "${_p_FAILURE_MSG}" )
     endif()
-
+    if( _p_QUIET )
+        list( APPEND _opts QUIET )
+    endif()
     ecbuild_find_package( NAME ${_p_PROJECT} ${_opts} )
 
     if( ${_p_PROJECT}_FOUND )
