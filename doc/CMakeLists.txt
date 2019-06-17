@@ -23,13 +23,13 @@ if( PYTHONINTERP_FOUND )
   if( SPHINX_FOUND )
 
     # configured documentation tools and intermediate build results
-    set(SPHINX_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/_build")
+    set(SPHINX_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/sphinx_build")
 
     # Sphinx cache with pickled ReST documents
-    set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_doctrees")
+    set(SPHINX_CACHE_DIR "${CMAKE_CURRENT_BINARY_DIR}/sphinx_doctrees")
 
     # Sphinx source with pickled ReST documents
-    set(SPHINX_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_source")
+    set(SPHINX_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/sphinx_source")
 
     # HTML output directory
     set(SPHINX_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/html")
