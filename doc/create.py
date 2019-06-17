@@ -7,17 +7,11 @@
 # nor does it submit to any jurisdiction.
 
 """
-Create documentation for a given list of ecBuild macros.
+Extract rst documentation for a given list of ecBuild macros for use with Sphinx.
 """
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-import logging
 from os import environ, path, makedirs
-import requests
-
-
-log = logging.getLogger('create')
-log.setLevel(logging.DEBUG)
 
 
 def writeRST(rst, directory):
@@ -88,10 +82,10 @@ def macrosRST(macros):
     strings.append('ecBuild macros\n')
     strings.append('##############\n')
     strings.append('.. toctree::\n')
-    strings.append('\t:maxdepth: 2\n')
+    strings.append('\t:maxdepth: 1\n')
     strings.append('\n')
 
-    for m in macros:
+    for m in sorted(macros):
         mname, _ = path.splitext(m)
         strings.append('\t'+mname+'.rst\n')
 
@@ -101,42 +95,26 @@ def macrosRST(macros):
 def main():
     parser = ArgumentParser(description=__doc__,
                             formatter_class=ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--logfile', default='create_doc.log',
-                        help='Path to log file')
     parser.add_argument('--source', default='./_source',
                         help='Path to stage Sphinx .rst files')
     parser.add_argument('macro', nargs='+',
                         help='list of paths to ecBuild macros')
     args = parser.parse_args()
 
-    # Log to file with level DEBUG
-    fh = logging.FileHandler(args.logfile)
-    fh.setLevel(logging.DEBUG)
-    fmt = logging.Formatter('%(asctime)s %(name)s %(levelname)-5s - %(message)s')
-    fh.setFormatter(fmt)
-    log.addHandler(fh)
-    # Log to console with level INFO
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-    log.addHandler(ch)
-    # Also log requests at debug level to file
-    logging.getLogger('requests').addHandler(fh)
-    logging.getLogger('requests').setLevel(logging.DEBUG)
+    print('====== Start creating rst for Sphinx documentation ======')
 
-    log.info('====== Start creating documentation ======')
-    log.info('Logging to file %s', args.logfile)
     rst = {}
     for m in args.macro:
         mname, _ = path.splitext(m)
         mname = path.basename(mname)
         rst[mname] = '\n'.join(extract(m))
 
-    writeRST(rst, args.source+'/macros')
+    writeRST(rst, path.join(args.source, 'macros'))
 
     writeRST({'index': indexRST()}, args.source)
-    writeRST({'index': macrosRST(rst.keys())}, args.source+'/macros')
+    writeRST({'index': macrosRST(rst.keys())}, path.join(args.source, 'macros'))
 
-    log.info('====== Finished creating documentation ======')
+    print('====== Finished creating rst for Sphinx documentation ======')
 
 if __name__ == '__main__':
     main()

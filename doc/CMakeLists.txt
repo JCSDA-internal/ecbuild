@@ -36,9 +36,10 @@ if( PYTHONINTERP_FOUND )
 
     add_custom_target( create_docs COMMENT "Creating Sphinx RST documentation" )
     add_custom_command( TARGET create_docs POST_BUILD
-        COMMAND ${PYTHON_EXECUTABLE} create.py --logfile "${CMAKE_CURRENT_BINARY_DIR}/create.log" --source ${SPHINX_SOURCE_DIR} ${ECBUILD_MODULE}
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                        COMMENT "Creating Sphinx RST documentation" )
+        COMMAND ${PYTHON_EXECUTABLE} create.py
+                --source ${SPHINX_SOURCE_DIR} ${ECBUILD_MODULE}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Creating Sphinx RST documentation" )
 
     configure_file(
       "${CMAKE_CURRENT_SOURCE_DIR}/conf.py.in"
