@@ -11,7 +11,7 @@
 # are specified, then the find module will default to finding only the NETCDF C
 # library.  If one or more COMPONENTS are specified, the module will attempt to
 # find the language bindings for the specified components.  Currently, the only
-# valid components are C, CXX, FORTRAN and F90.
+# valid components are C, CXX, Fortran and F90.
 #
 # On UNIX systems, this module will read the variable NETCDF_USE_STATIC_LIBRARIES
 # to determine whether or not to prefer a static link to a dynamic link for NETCDF
@@ -33,8 +33,8 @@
 #  NETCDF_DEFINITIONS - Required compiler definitions for NETCDF
 #  NETCDF_C_LIBRARIES - Required libraries for the NETCDF C bindings.
 #  NETCDF_CXX_LIBRARIES - Required libraries for the NETCDF C++ bindings
-#  NETCDF_FORTRAN_LIBRARIES - Required libraries for the NETCDF FORTRAN bindings
-#  NETCDF_F90_LIBRARIES - Required libraries for the NETCDF FORTRAN 90 bindings
+#  NETCDF_Fortran_LIBRARIES - Required libraries for the NETCDF Fortran bindings
+#  NETCDF_F90_LIBRARIES - Required libraries for the NETCDF Fortran 90 bindings
 #  NETCDF_LIBRARIES - Required libraries for all requested bindings
 #  NETCDF_FOUND - true if NETCDF was found on the system
 #  NETCDF_LIBRARY_DIRS - the full set of library directories
@@ -62,7 +62,7 @@ include(FindPackageHandleStandardArgs)
 
 # List of the valid NETCDF components
 set( NETCDF_VALID_COMPONENTS
-    FORTRAN
+    Fortran
     F90
     CXX
     C
@@ -153,7 +153,7 @@ else()
           _NETCDF_CONFIG (--cflags output return)
         elseif( ${LANGUAGE} STREQUAL CXX )
           _NETCDF_CONFIG (--cxx4flags output return)
-        elseif( ${LANGUAGE} STREQUAL FORTRAN OR ${LANGUAGE} STREQUAL F90 )
+        elseif( ${LANGUAGE} STREQUAL Fortran OR ${LANGUAGE} STREQUAL F90 )
           _NETCDF_CONFIG (--fflags output return)
         endif()
         if (${output} STREQUAL no)
@@ -176,7 +176,7 @@ else()
           _NETCDF_CONFIG (--libs output return)
         elseif( ${LANGUAGE} STREQUAL CXX )
           _NETCDF_CONFIG (--cxx4libs output return)
-        elseif( ${LANGUAGE} STREQUAL FORTRAN OR ${LANGUAGE} STREQUAL F90 )
+        elseif( ${LANGUAGE} STREQUAL Fortran OR ${LANGUAGE} STREQUAL F90 )
           _NETCDF_CONFIG (--flibs output return)
         endif()
         if (${output} STREQUAL no)
@@ -258,9 +258,14 @@ else()
         if( NETCDF_${LANGUAGE}_FOUND )
             ecbuild_debug( "FindNetCDF4: ${LANGUAGE} language bindings found" )
             if( CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE )
-                list( APPEND NETCDF_${LANGUAGE}_LIBRARIES
-                    debug ${NETCDF_${LANGUAGE}_LIBRARIES_DEBUG}
-                    optimized ${NETCDF_${LANGUAGE}_LIBRARIES_RELEASE} )
+	        if (NETCDF_${LANGUAGE}_LIBRARIES_DEBUG)
+                  list( APPEND NETCDF_${LANGUAGE}_LIBRARIES
+                        debug ${NETCDF_${LANGUAGE}_LIBRARIES_DEBUG})
+                endif()
+	        if (NETCDF_${LANGUAGE}_LIBRARIES_RELEASE)
+                  list( APPEND NETCDF_${LANGUAGE}_LIBRARIES
+                        optimized ${NETCDF_${LANGUAGE}_LIBRARIES_RELEASE})
+                endif()
             else()
                 list( APPEND NETCDF_${LANGUAGE}_LIBRARIES
                     ${NETCDF_${LANGUAGE}_LIBRARIES_RELEASE} )

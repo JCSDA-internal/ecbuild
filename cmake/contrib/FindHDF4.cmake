@@ -9,14 +9,14 @@
 #
 # HDF4_FOUND               - True if found, otherwise all other vars are undefined
 # HDF4_INCLUDE_DIR         - The include dir for main *.h files
-# HDF4_FORTRAN_INCLUDE_DIR - The include dir for fortran modules and headers
+# HDF4_Fortran_INCLUDE_DIR - The include dir for fortran modules and headers
 # HDF4_VERSION_STRING      - full version (e.g. 4.2.0)
 # HDF4_VERSION_MAJOR       - major part of version (e.g. 4)
 # HDF4_VERSION_MINOR       - minor part (e.g. 2)
 #
 # The following boolean vars will be defined
 # HDF4_ENABLE_PARALLEL - 1 if HDF4 parallel supported
-# HDF4_BUILD_FORTRAN   - 1 if HDF4 was compiled with fortran on
+# HDF4_BUILD_Fortran   - 1 if HDF4 was compiled with fortran on
 # HDF4_BUILD_CPP_LIB   - 1 if HDF4 was compiled with cpp on
 # HDF4_BUILD_TOOLS     - 1 if HDF4 was compiled with tools on
 #
@@ -40,11 +40,11 @@ include(SelectLibraryConfigurations)
 # seed the initial lists of libraries to find with items we know we need
 set( HDF4_C_LIBRARY_NAMES_INIT df )
 set( HDF4_F90_LIBRARY_NAMES_INIT df_f90cstub ${HDF5_C_LIBRARY_NAMES_INIT} )
-set( HDF4_FORTRAN_LIBRARY_NAMES_INIT df_fortran ${HDF4_F90_LIBRARY_NAMES_INIT} )
+set( HDF4_Fortran_LIBRARY_NAMES_INIT df_fortran ${HDF4_F90_LIBRARY_NAMES_INIT} )
 set( HDF4_MFHDF_LIBRARY_NAMES_INIT mfhdf ${HDF4_C_LIBRARY_NAMES_INIT})
 set( HDF4_XDR_LIBRARY_NAMES_INIT xdr ${HDF4_MFHDF_LIBRARY_NAMES_INIT})
-set( HDF4_FORTRAN_MF_90_LIBRARY_NAMES_INIT mfhdf_f90cstub ${HDF4_FORTRAN_LIBRARY_NAMES_INIT} )
-set( HDF4_FORTRAN_MF_LIBRARY_NAMES_INIT mfhdf_fortran ${HDF4_FORTRAN_MF_90_LIBRARY_NAMES_INIT} )
+set( HDF4_Fortran_MF_90_LIBRARY_NAMES_INIT mfhdf_f90cstub ${HDF4_Fortran_LIBRARY_NAMES_INIT} )
+set( HDF4_Fortran_MF_LIBRARY_NAMES_INIT mfhdf_fortran ${HDF4_Fortran_MF_90_LIBRARY_NAMES_INIT} )
 set( HDF4_C_LIB ${HDF4_XDR_LIBRARY_NAMES_INIT})
 
 # The HINTS option should only be used for values computed from the system.
