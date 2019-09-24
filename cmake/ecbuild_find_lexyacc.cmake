@@ -22,6 +22,10 @@
 # :SKIP_BISON: do not search for flex and bison
 # :SKIP_YACC:  do not search for lex and yacc
 #
+# The following CMake variables influence the search for bison or yacc:
+#
+# :BISON_MIN_VERSION: Set the minimum valid version of Bison.
+#
 # Output variables
 # ----------------
 #
@@ -47,7 +51,13 @@ macro( ecbuild_find_lexyacc )
   # find preferably bison or else yacc
 
   if( NOT SKIP_BISON )
-
+  
+    if ( NOT BISON_MIN_VERSION )
+        find_package( BISON )
+    else()
+        find_package( BISON ${BISON_MIN_VERSION} )
+    endif()
+    
     find_package( BISON )
     if(BISON_FOUND AND BISON_VERSION VERSION_LESS 2.3 )
         ecbuild_critical( "Bison found with version ${BISON_VERSION} is less than 2.3.\nPlease define BISON_EXECUTABLE to an appropriate version or define SKIP_BISON to try finding Yacc instead" )
