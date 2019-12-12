@@ -298,14 +298,20 @@ if( UNIX )
           ecbuild_warn( "The linker does not support $ORIGIN at link-time, \
             disabling dynamic symbol check when linking against shared libraries" )
           #Use these corrective flags for all compilers except Intel 17 and Intel 18 which fail linking
-          set(_linker_check_corrective_flags $<$<NOT:$<OR:
-                $<AND:$<COMPILE_LANGUAGE:Fortran>,$<Fortran_COMPILER_ID:Intel>,$<VERSION_GREATER_EQUAL:$<Fortran_COMPILER_VERSION>,17>,$<VERSION_LESS:$<Fortran_COMPILER_VERSION>,18>>,
-                $<AND:$<COMPILE_LANGUAGE:C>,$<C_COMPILER_ID:Intel>,$<VERSION_GREATER_EQUAL:$<C_COMPILER_VERSION>,17>,$<VERSION_LESS:$<C_COMPILER_VERSION>,18>>,
-                $<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:Intel>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,17>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,18>>>>:
-                 -Wl,--allow-shlib-undefined>
-          set(CMAKE_EXE_LINKER_FLAGS     "${CMAKE_EXE_LINKER_FLAGS}    ${_linker_check_corrective_flags}")
-          set(CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} ${_linker_check_corrective_flags}")
-          set(CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} ${_linker_check_corrective_flags}")
+          set( _linker_check_flags $<$<NOT:$<OR:
+                $<AND:$<COMPILE_LANGUAGE:Fortran>,$<Fortran_COMPILER_ID:Intel>,
+                      $<VERSION_GREATER_EQUAL:$<Fortran_COMPILER_VERSION>,17>,
+                      $<VERSION_LESS:$<Fortran_COMPILER_VERSION>,18>>,
+                $<AND:$<COMPILE_LANGUAGE:C>,$<C_COMPILER_ID:Intel>,
+                      $<VERSION_GREATER_EQUAL:$<C_COMPILER_VERSION>,17>,
+                      $<VERSION_LESS:$<C_COMPILER_VERSION>,18>>,
+                $<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:Intel>,
+                      $<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,17>,
+                      $<VERSION_LESS:$<CXX_COMPILER_VERSION>,18>>>>:
+                 -Wl,--allow-shlib-undefined> )
+          set(CMAKE_EXE_LINKER_FLAGS     "${CMAKE_EXE_LINKER_FLAGS}    ${_linker_check_flags}")
+          set(CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} ${_linker_check_flags}")
+          set(CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} ${_linker_check_flags}")
         endif()
         cmake_policy( POP )
       endif()
