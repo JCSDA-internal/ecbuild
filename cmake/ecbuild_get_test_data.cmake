@@ -35,26 +35,13 @@ function( _download_test_data _p_NAME _p_DIR_URL _p_DIRLOCAL _p_CHECK_FILE_EXIST
   # Error message is: "curl: (33) HTTP server doesn't seem to support byte ranges. Cannot resume."
   # Switch to wget if _p_CHECK_FILE_EXISTS is activated
   if( CURL_PROGRAM AND NOT _p_CHECK_FILE_EXISTS)
-
-    if( _p_CHECK_FILE_EXISTS )
-
-      add_custom_command( OUTPUT ${_p_NAME}
-        COMMENT "(curl) downloading ${_p_DIR_URL}/${_p_NAME}"
-        COMMAND ${CURL_PROGRAM} --continue-at - --silent --show-error --fail --output ${_p_DIRLOCAL}/${_p_NAME}
-                --retry ${ECBUILD_DOWNLOAD_RETRIES}
-                --connect-timeout ${ECBUILD_DOWNLOAD_TIMEOUT}
-                ${_p_DIR_URL}/${_p_NAME} )
-
-    else()
-
+ 
       add_custom_command( OUTPUT ${_p_NAME}
         COMMENT "(curl) downloading ${_p_DIR_URL}/${_p_NAME}"
         COMMAND ${CURL_PROGRAM} --silent --show-error --fail --output ${_p_DIRLOCAL}/${_p_NAME}
                 --retry ${ECBUILD_DOWNLOAD_RETRIES}
                 --connect-timeout ${ECBUILD_DOWNLOAD_TIMEOUT}
                 ${_p_DIR_URL}/${_p_NAME} )
-
-    endif()
 
   else()
 
@@ -124,8 +111,9 @@ endfunction()
 # TARGET : optional, defaults to test_data_<name>
 #   CMake target name
 #
-# DIRHOST : optional, defaults to <project>/<relative path to current dir>
-#   directory in which the test data resides
+# DIRHOST : optional
+#   use when there is a directory structure on the server that 
+#   hosts test files
 #
 # DIRLOCAL : optional, defaults to <project>/<relative path to current dir>
 #   local directory in which the test data is copied
@@ -148,8 +136,8 @@ endfunction()
 # If the ``ECBUILD_DOWNLOAD_BASE_URL`` variable is not set, the default URL
 # ``http://download.ecmwf.org/test-data`` is used.
 #
-# If the ``DIRHOST`` argument is not given, the project name followed by the
-# relative path from the root directory to the current directory is used.
+# If the ``DIRHOST`` argument is not given, test data will be downloaded
+# from ``<ECBUILD_DOWNLOAD_BASE_URL>/<NAME>``
 #
 # By default, the downloaded file is verified against an md5 checksum, either
 # given as the ``MD5`` argument or downloaded from the server otherwise. Use
@@ -326,9 +314,9 @@ endfunction(ecbuild_get_test_data)
 # TARGET : optional
 #   CMake target name
 #
-# DIRHOST : optional, defaults to <project>/<relative path to current dir>
-#   directory in which the test data resides
-#
+# DIRHOST : optional
+#   use when there is a directory structure on the server that 
+#   hosts test files
 # DIRLOCAL : optional, defaults to <project>/<relative path to current dir>
 #   local directory in which the test data is copied
 #
@@ -357,8 +345,8 @@ endfunction(ecbuild_get_test_data)
 # If the ``ECBUILD_DOWNLOAD_BASE_URL`` variable is not set, the default URL
 # ``http://download.ecmwf.org/test-data`` is used.
 #
-# If the ``DIRHOST`` argument is not given, the project name followed by the
-# relative path from the root directory to the current directory is used.
+# If the ``DIRHOST`` argument is not given, test data will be downloaded
+# from ``<ECBUILD_DOWNLOAD_BASE_URL>/<NAME>``
 #
 # By default, each downloaded file is verified against an md5 checksum, either
 # given as part of the name as described above or a remote checksum downloaded
