@@ -23,8 +23,8 @@
 # NAME : required
 #   name of the file to check
 #
-# DIRHOST : optional, defaults to <project>/<relative path to current dir>
-#   directory in which the file resides
+# DIRHOST : optional
+#   use when there is a directory structure on the server hosting test files
 #
 # RESULT : required
 #   check result (0 if the URL exists, more if not)
@@ -38,8 +38,9 @@
 # If the ``ECBUILD_DOWNLOAD_BASE_URL`` variable is not set, the default URL
 # ``http://download.ecmwf.org/test-data`` is used.
 #
-# If the ``DIRHOST`` argument is not given, the project name followed by the
-# relative path from the root directory to the current directory is used.
+# If the ``DIRHOST`` argument is not given,
+#``<ECBUILD_DOWNLOAD_BASE_URL>/<NAME>`` will be checked
+#
 #
 # Examples
 # --------
@@ -68,10 +69,6 @@ function(ecbuild_check_url)
       ecbuild_critical("ecbuild_get_test_data() expects a NAME")
     endif()
 
-    if( NOT _p_DIRHOST )
-      set( _p_DIRHOST ${PROJECT_NAME}/${currdir} )
-    endif()
-
     # Allow the user to override the download URL (ECBUILD-447)
     if( NOT DEFINED ECBUILD_DOWNLOAD_BASE_URL )
       set( ECBUILD_DOWNLOAD_BASE_URL http://download.ecmwf.org/test-data )
@@ -80,6 +77,12 @@ function(ecbuild_check_url)
     # Do not retry downloads by default (ECBUILD-307)
     if( NOT DEFINED ECBUILD_DOWNLOAD_RETRIES )
       set( ECBUILD_DOWNLOAD_RETRIES 0 )
+    endif()
+
+    if( NOT _p_DIRHOST )
+      set( DOWNLOAD_URL ${ECBUILD_DOWNLOAD_BASE_URL} )
+    else()
+      set( DOWNLOAD_URL ${ECBUILD_DOWNLOAD_BASE_URL}/${_p_DIRHOST} )
     endif()
 
     # Use default timeout of 30s if not specified (ECBUILD-307)
@@ -96,7 +99,7 @@ function(ecbuild_check_url)
         COMMAND ${CURL_PROGRAM} --silent --head --fail --output /dev/null
                 --retry ${ECBUILD_DOWNLOAD_RETRIES}
                 --connect-timeout ${ECBUILD_DOWNLOAD_TIMEOUT}
-                ${ECBUILD_DOWNLOAD_BASE_URL}/${_p_DIRHOST}/${NAME}
+		${DOWNLOAD_URL}/${NAME}
         RESULT_VARIABLE CODE
       )
 
@@ -112,7 +115,7 @@ function(ecbuild_check_url)
         execute_process(
           COMMAND ${WGET_PROGRAM} -O/dev/null -q
                   -t ${ECBUILD_DOWNLOAD_RETRIES} -T ${ECBUILD_DOWNLOAD_TIMEOUT}
-                  ${ECBUILD_DOWNLOAD_BASE_URL}/${_p_DIRHOST}/${NAME}
+		  ${DOWNLOAD_URL}/${NAME}
             RESULT_VARIABLE CODE
         )
 
@@ -154,8 +157,8 @@ endfunction(ecbuild_check_url)
 # NAMES : required
 #   list of names of the files to check
 #
-# DIRHOST : optional, defaults to <project>/<relative path to current dir>
-#   directory in which the files reside
+# DIRHOST : optional
+#   use when there is a directory structure on the server hosting test files
 #
 # RESULT : required
 #   check result (0 if the URL exists, more if not)
@@ -167,8 +170,8 @@ endfunction(ecbuild_check_url)
 # for each name given in the list of ``NAMES``.
 # ``RESULT`` is set to 0 if all the files exist, more if any file is missing.
 #
-# If the ``DIRHOST`` argument is not given, the project name followed by the
-# relative path from the root directory to the current directory is used.
+# If the ``DIRHOST`` argument is not given,
+#``<ECBUILD_DOWNLOAD_BASE_URL>/<NAME>`` will be checked
 #
 # Examples
 # --------
@@ -196,10 +199,6 @@ function(ecbuild_check_multiurl)
 
     if( NOT _p_NAMES )
       ecbuild_critical("ecbuild_get_test_data() expects a NAMES")
-    endif()
-
-    if( NOT _p_DIRHOST )
-      set( _p_DIRHOST ${PROJECT_NAME}/${currdir} )
     endif()
 
     # Initialise CODE_SUM
