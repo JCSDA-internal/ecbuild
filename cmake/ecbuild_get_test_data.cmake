@@ -34,7 +34,8 @@ function( _download_test_data _p_NAME _p_DIR_URL _p_DIRLOCAL _p_CHECK_FILE_EXIST
   # The "--continue-at - " option of curl is buggy... (ask Google)
   # Error message is: "curl: (33) HTTP server doesn't seem to support byte ranges. Cannot resume."
   # Switch to wget if _p_CHECK_FILE_EXISTS is activated
-  if( CURL_PROGRAM AND NOT _p_CHECK_FILE_EXISTS)
+#  if( CURL_PROGRAM )                            # should be uncommented when curl bug is corrected
+  if( CURL_PROGRAM AND NOT _p_CHECK_FILE_EXISTS) # should be removed when curl bug is corrected
  
       add_custom_command( OUTPUT ${_p_NAME}
         COMMENT "(curl) downloading ${_p_DIR_URL}/${_p_NAME}"
@@ -115,8 +116,7 @@ endfunction()
 #   use when there is a directory structure on the server that 
 #   hosts test files
 #
-# DIRLOCAL : optional, defaults to <project>/<relative path to current dir>
-#   local directory in which the test data is copied
+# DIRLOCAL : optional, defaults to ".", local directory in which the test data is copied
 #
 # MD5 : optional, ignored if NOCHECK is given
 #   md5 checksum of the data set to verify. If not given and NOCHECK is *not*
@@ -188,6 +188,10 @@ function( ecbuild_get_test_data )
       string( REGEX REPLACE "[^A-Za-z0-9_]" "_" _p_TARGET "test_data_${_p_NAME}")
 #      string( REGEX REPLACE "[^A-Za-z0-9_]" "_" _p_TARGET "${_p_NAME}")
 #      set( _p_TARGET ${_p_NAME} )
+    endif()
+
+    if( NOT _p_DIRLOCAL )
+      set( _p_DIRLOCAL "." )
     endif()
 
     # Allow the user to override the base download URL (ECBUILD-447)
@@ -317,8 +321,8 @@ endfunction(ecbuild_get_test_data)
 # DIRHOST : optional
 #   use when there is a directory structure on the server that 
 #   hosts test files
-# DIRLOCAL : optional, defaults to <project>/<relative path to current dir>
-#   local directory in which the test data is copied
+#
+# DIRLOCAL : optional, defaults to ".", local directory in which the test data is copied
 #
 # LABELS : optional
 #   list of labels to assign to the test
