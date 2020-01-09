@@ -95,7 +95,7 @@ endfunction()
 #
 #   ecbuild_get_test_data( NAME <name>
 #                          [ TARGET <target> ]
-#                          [ DIRHOST <dir> ]
+#                          [ DIRNAME <dir> ]
 #                          [ DIRLOCAL <dir> ]
 #                          [ MD5 <hash> ]
 #                          [ EXTRACT ]
@@ -112,7 +112,7 @@ endfunction()
 # TARGET : optional, defaults to test_data_<name>
 #   CMake target name
 #
-# DIRHOST : optional
+# DIRNAME : optional
 #   use when there is a directory structure on the server that 
 #   hosts test files
 #
@@ -131,13 +131,13 @@ endfunction()
 # Usage
 # -----
 #
-# Download test data from ``<ECBUILD_DOWNLOAD_BASE_URL>/<DIRHOST>/<NAME>``
+# Download test data from ``<ECBUILD_DOWNLOAD_BASE_URL>/<DIRNAME>/<NAME>``
 #
 # If the ``ECBUILD_DOWNLOAD_BASE_URL`` variable is not set, the default URL
 # ``http://download.ecmwf.org/test-data`` is used.
 #
-# If the ``DIRHOST`` argument is not given, test data will be downloaded
-# from ``<ECBUILD_DOWNLOAD_BASE_URL>/<NAME>``
+# If the ``DIRNAME`` argument is not given, test data will be downloaded
+# from ``<ECBUILD_DOWNLOAD_BASE_URL>/<project>/<relative path to current dir>/<NAME>``
 #
 # By default, the downloaded file is verified against an md5 checksum, either
 # given as the ``MD5`` argument or downloaded from the server otherwise. Use
@@ -167,7 +167,7 @@ endfunction()
 function( ecbuild_get_test_data )
 
     set( options NOCHECK EXTRACT )
-    set( single_value_args TARGET NAME DIRHOST DIRLOCAL MD5 SHA1)
+    set( single_value_args TARGET NAME DIRNAME DIRLOCAL MD5 SHA1)
     set( multi_value_args  )
 
     cmake_parse_arguments( _p "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
@@ -200,10 +200,11 @@ function( ecbuild_get_test_data )
     endif()
 
     # Set download URL
-    if( NOT _p_DIRHOST )
-      set( DOWNLOAD_URL ${ECBUILD_DOWNLOAD_BASE_URL} )
+    if( NOT _p_DIRNAME )
+      set( DOWNLOAD_URL ${ECBUILD_DOWNLOAD_BASE_URL}/${PROJECT_NAME}/${currdir}) 
+	      #      set( DOWNLOAD_URL ${ECBUILD_DOWNLOAD_BASE_URL} )
     else()
-      set( DOWNLOAD_URL ${ECBUILD_DOWNLOAD_BASE_URL}/${_p_DIRHOST} )
+      set( DOWNLOAD_URL ${ECBUILD_DOWNLOAD_BASE_URL}/${_p_DIRNAME} )
     endif()
 
     if( NOT _p_NOCHECK AND NOT _p_MD5 AND NOT _p_SHA1 )
@@ -301,7 +302,7 @@ endfunction(ecbuild_get_test_data)
 #
 #   ecbuild_get_test_multidata( NAMES <name1> [ <name2> ... ]
 #                               TARGET <target>
-#                               [ DIRHOST <dir> ]
+#                               [ DIRNAME <dir> ]
 #                               [ DIRLOCAL <dir> ]
 #                               [ LABELS <label1> [<label2> ...] ]
 #                               [ EXTRACT ]
@@ -318,7 +319,7 @@ endfunction(ecbuild_get_test_data)
 # TARGET : optional
 #   CMake target name
 #
-# DIRHOST : optional
+# DIRNAME : optional
 #   use when there is a directory structure on the server that 
 #   hosts test files
 #
@@ -341,16 +342,16 @@ endfunction(ecbuild_get_test_data)
 # Usage
 # -----
 #
-# Download test data from ``<ECBUILD_DOWNLOAD_BASE_URL>/<DIRHOST>``
+# Download test data from ``<ECBUILD_DOWNLOAD_BASE_URL>/<DIRNAME>``
 # for each name given in the list of ``NAMES``. Each name may contain a
-# relative path, which is appended to ``DIRHOST`` and may be followed by an
+# relative path, which is appended to ``DIRNAME`` and may be followed by an
 # md5 checksum, separated with a ``:`` (the name must not contain spaces).
 #
 # If the ``ECBUILD_DOWNLOAD_BASE_URL`` variable is not set, the default URL
 # ``http://download.ecmwf.org/test-data`` is used.
 #
-# If the ``DIRHOST`` argument is not given, test data will be downloaded
-# from ``<ECBUILD_DOWNLOAD_BASE_URL>/<NAME>``
+# If the ``DIRNAME`` argument is not given, test data will be downloaded
+# from ``<ECBUILD_DOWNLOAD_BASE_URL>/<project>/<relative path to current dir>/<NAME>``
 #
 # By default, each downloaded file is verified against an md5 checksum, either
 # given as part of the name as described above or a remote checksum downloaded
@@ -362,16 +363,16 @@ endfunction(ecbuild_get_test_data)
 # Do not verify checksums: ::
 #
 #   ecbuild_get_test_multidata( TARGET get_grib_data NAMES foo.grib bar.grib
-#                               DIRHOST test/data/dir NOCHECK )
+#                               DIRNAME test/data/dir NOCHECK )
 #
 # Checksums agains remote md5 file: ::
 #
 #   ecbuild_get_test_multidata( TARGET get_grib_data NAMES foo.grib bar.grib
-#                               DIRHOST test/data/dir )
+#                               DIRNAME test/data/dir )
 #
 # Checksum agains local md5: ::
 #
-#   ecbuild_get_test_multidata( TARGET get_grib_data DIRHOST test/data/dir
+#   ecbuild_get_test_multidata( TARGET get_grib_data DIRNAME test/data/dir
 #                               NAMES msl.grib:f69ca0929d1122c7878d19f32401abe9 )
 #
 ##############################################################################
@@ -379,7 +380,7 @@ endfunction(ecbuild_get_test_data)
 function( ecbuild_get_test_multidata )
 
     set( options EXTRACT NOCHECK )
-    set( single_value_args TARGET DIRHOST DIRLOCAL )
+    set( single_value_args TARGET DIRNAME DIRLOCAL )
     set( multi_value_args  NAMES LABELS )
 
     cmake_parse_arguments( _p "${options}" "${single_value_args}" "${multi_value_args}"  ${_FIRST_ARG} ${ARGN} )
@@ -430,10 +431,10 @@ endfunction()\n\n" )
         get_filename_component( _dir  ${_f} PATH )
 
         set( _path_comps "" )
-        list( APPEND _path_comps ${_p_DIRHOST} ${_dir} )
-        join( _path_comps "/" _DIRHOST )
-        if( _DIRHOST )
-            set( _DIRHOST DIRHOST ${_DIRHOST} )
+        list( APPEND _path_comps ${_p_DIRNAME} ${_dir} )
+        join( _path_comps "/" _DIRNAME )
+        if( _DIRNAME )
+            set( _DIRNAME DIRNAME ${_DIRNAME} )
         endif()
         unset( _path_comps )
 
@@ -448,7 +449,7 @@ endfunction()\n\n" )
         ecbuild_get_test_data(
             TARGET __get_data_${_p_TARGET}_${_name}
             DIRLOCAL ${_p_DIRLOCAL}
-            NAME ${_file} ${_DIRHOST} ${_md5} ${_extract} ${_nocheck} )
+            NAME ${_file} ${_DIRNAME} ${_md5} ${_extract} ${_nocheck} )
 
         if ( ${CMAKE_GENERATOR} MATCHES Ninja )
           set( _fast "" )
