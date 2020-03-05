@@ -12,7 +12,6 @@
 #
 #   - NetCDF_FOUND                - System has NetCDF
 #   - NetCDF_INCLUDE_DIRS         - the NetCDF include directories
-#   - NetCDF_LIBRARIES            - the libraries needed to use NetCDF
 #   - NetCDF_VERSION              - the version of NetCDF
 #
 # Following components are available:
@@ -26,19 +25,31 @@
 #
 #   - NetCDF_<comp>_FOUND         - whether the component is found
 #   - NetCDF_<comp>_LIBRARIES     - the libraries for the component
+#   - NetCDF_<comp>_LIBRARY_STATIC - Boolean is true if libraries for component are static
+#   - NetCDF_<comp>_LIBRARY_SHARED - Boolean is true if libraries for component are shared
 #   - NetCDF_<comp>_INCLUDE_DIRS  - the include directories for specfied component
 #   - NetCDF::NetCDF_<comp>       - target of component to be used with target_link_libraries()
 #
 # The following paths will be searched in order if set in CMake (first priority) or environment (second priority)
 #
-#   - NETCDF_ROOT                 - root of NetCDF installation
-#   - NETCDF_DIR                  - root of NetCDF installation
-#   - NETCDF_PATH                 - root of NetCDF installation
-#   - NETCDF4_DIR                 - root of NetCDF installation
 #   - NetCDF_ROOT                 - root of NetCDF installation
+#   - NetCDF4_ROOT                 - root of NetCDF installation
 #   - NetCDF_DIR                  - root of NetCDF installation
 #   - NetCDF_PATH                 - root of NetCDF installation
 #   - NetCDF4_DIR                 - root of NetCDF installation
+#   - NETCDF_ROOT                 - root of NetCDF installation
+#   - NETCDF4_ROOT                 - root of NetCDF installation
+#   - NETCDF_DIR                  - root of NetCDF installation
+#   - NETCDF_PATH                 - root of NetCDF installation
+#   - NETCDF4_DIR                 - root of NetCDF installation
+#
+# The search process begins with locating NetCDF Include headers.  If these are in a non-standard location,
+# set one of the following CMake or environment variables to point to the location:
+#
+#  - NetCDF_INCLUDE_DIR
+#  - NETCDF_INCLUDE_DIR
+#  - NetCDF_INCLUDE_DIRS
+#  - NETCDF_INCLUDE_DIRS
 #
 # Notes:
 #
@@ -84,20 +95,26 @@ endif()
 
 ## Search hints for finding include directories and libraries
 set( _search_hints
-              ${NETCDF_ROOT} ${NETCDF_DIR} ${NETCDF_PATH} ${NETCDF4_DIR}
-              ${NetCDF_ROOT} ${NetCDF_DIR} ${NetCDF_PATH} ${NetCDF4_DIR}
-              ENV NETCDF_ROOT ENV NETCDF_DIR ENV NETCDF_PATH ENV NETCDF4_DIR
-              ENV NetCDF_ROOT ENV NetCDF_DIR ENV NetCDF_PATH ENV NetCDF4_DIR
- )
+    ${NetCDF_ROOT} ${NetCDF4_ROOT} ${NetCDF_DIR} ${NetCDF_PATH} ${NetCDF4_DIR}
+    $ENV{NetCDF_ROOT} $ENV{NetCDF4_ROOT} $ENV{NetCDF_DIR} $ENV{NetCDF_PATH} $ENV{NetCDF4_DIR}
+    ${NETCDF_ROOT} ${NETCDF4_ROOT} ${NETCDF_DIR} ${NETCDF_PATH} ${NETCDF4_DIR}
+    $ENV{NETCDF_ROOT} $ENV{NETCDF4_ROOT} $ENV{NETCDF_DIR} $ENV{NETCDF_PATH} $ENV{NETCDF4_DIR} )
+set( _include_search_hints
+    ${NetCDF_INCLUDE_DIR} $ENV{NetCDF_INCLUDE_DIR}
+    ${NETCDF_INCLUDE_DIR} $ENV{NETCDF_INCLUDE_DIR}
+    ${NetCDF_INCLUDE_DIRS} $ENV{NetCDF_INCLUDE_DIRS}
+    ${NETCDF_INCLUDE_DIRS} $ENV{NETCDF_INCLUDE_DIRS} )
 
 ## Find include directories
 find_path(NetCDF_INCLUDE_DIRS
   NAMES netcdf.h
   DOC "netcdf include directories"
-  HINTS ${_search_hints}
+  HINTS ${_include_search_hints} ${_search_hints}
   PATH_SUFFIXES include ../../include
+  NO_SYSTEM_ENVIRONMENT_PATH
 )
 mark_as_advanced(NetCDF_INCLUDE_DIRS)
+ecbuild_debug("NetCDF_INCLUDE_DIRS: ${NetCDF_INCLUDE_DIRS}")
 
 ## Find libraries for each component
 foreach( _comp ${_search_components} )
@@ -110,10 +127,18 @@ foreach( _comp ${_search_components} )
     PATH_SUFFIXES lib ../../lib
   )
   mark_as_advanced(NetCDF_${_comp}_LIBRARY)
-  if( NetCDF_${_comp}_LIBRARY AND NOT (NetCDF_${_comp}_LIBRARY MATCHES ".a$") )
-    set( NetCDF_${_comp}_LIBRARY_SHARED TRUE )
+  ecbuild_debug("NetCDF_${_comp}_LIBRARY: ${NetCDF_${_comp}_LIBRARY}")
+
+  if( NetCDF_${_comp}_LIBRARY )
+    if( NetCDF_${_comp}_LIBRARY MATCHES ".a$" )
+      set( NetCDF_${_comp}_LIBRARY_STATIC TRUE )
+      set( NetCDF_${_comp}_LIBRARY_SHARED FALSE )
+    else()
+      set( NetCDF_${_comp}_LIBRARY_STATIC FALSE )
+      set( NetCDF_${_comp}_LIBRARY_SHARED TRUE )
+    endif()
   endif()
-  if( NetCDF_${_comp}_LIBRARY_SHARED AND NetCDF_INCLUDE_DIRS )
+  if( (NetCDF_${_comp}_LIBRARY_SHARED OR NetCDF_${_comp}_LIBRARY_STATIC) AND NetCDF_INCLUDE_DIRS )
     set( ${CMAKE_FIND_PACKAGE_NAME}_${_arg_${_COMP}}_FOUND TRUE )
     list( APPEND NetCDF_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )      
     list( APPEND NetCDF_${_comp}_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )
@@ -136,6 +161,7 @@ if (NetCDF_INCLUDE_DIRS)
       DOC "NetCDF nc-config helper" )
   mark_as_advanced( NETCDF_CONFIG_EXECUTABLE )
 
+  ecbuild_debug("NETCDF_CONFIG_EXECUTABLE:${NETCDF_CONFIG_EXECUTABLE}")
   if( NETCDF_CONFIG_EXECUTABLE )
     execute_process( COMMAND ${NETCDF_CONFIG_EXECUTABLE} --version
       RESULT_VARIABLE _netcdf_config_result
@@ -164,7 +190,6 @@ endif ()
 
 ## Finalize find_package
 include(FindPackageHandleStandardArgs)
-
 find_package_handle_standard_args( ${CMAKE_FIND_PACKAGE_NAME}
   REQUIRED_VARS NetCDF_INCLUDE_DIRS NetCDF_LIBRARIES
   VERSION_VAR NetCDF_VERSION
