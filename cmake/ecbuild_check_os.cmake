@@ -295,12 +295,15 @@ if( UNIX )
         cmake_policy( PUSH )
         cmake_policy( SET CMP0012 NEW )
         if( NOT ${_linker_understands_origin} )
-          ecbuild_warn( "The linker does not support $ORIGIN at link-time, \
-            disabling dynamic symbol check when linking against shared libraries" )
-          set(_linker_check_corrective_flags $<$<NOT:$<COMPILE_LANG_AND_ID:$<COMPILE_LANGUAGE>,Intel>>:-Wl,--allow-shlib-undefined>)
-          set(CMAKE_EXE_LINKER_FLAGS     "${CMAKE_EXE_LINKER_FLAGS}    ${_linker_check_corrective_flags}")
-          set(CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} ${_linker_check_corrective_flags}")
-          set(CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} ${_linker_check_corrective_flags}")
+          #Use these corrective flags for all compilers except Intel 17 and Intel 18 which fail linking
+          if( (NOT CMAKE_Fortran_COMPILER_ID MATCHES Intel OR CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER 18) AND
+              (NOT CMAKE_C_COMPILER_ID MATCHES Intel OR CMAKE_C_COMPILER_VERSION VERSION_GREATER 18) AND
+              (NOT CMAKE_CXX_COMPILER_ID MATCHES Intel OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 18) )
+            set( _linker_check_flags "--allow-shlib-undefined>" )
+            set(CMAKE_EXE_LINKER_FLAGS     "${CMAKE_EXE_LINKER_FLAGS}    ${_linker_check_flags}")
+            set(CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} ${_linker_check_flags}")
+            set(CMAKE_MODULE_LINKER_FLAGS  "${CMAKE_MODULE_LINKER_FLAGS} ${_linker_check_flags}")
+          endif()
         endif()
         cmake_policy( POP )
       endif()
