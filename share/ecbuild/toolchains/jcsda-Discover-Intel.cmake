@@ -10,5 +10,11 @@ set( ECBUILD_Fortran_FLAGS  "-m64" )
 # MPI
 ####################################################################
 
-set( MPIEXEC_EXECUTABLE    "srun" )
-set( MPIEXEC_NUMPROC_FLAG  "-n" )
+set( MPIEXEC_EXECUTABLE    "mpirun" )
+set( MPIEXEC_NUMPROC_FLAG  "-np" )
+
+####################################################################
+# Options
+####################################################################
+
+set( ENABLE_AEC OFF )
