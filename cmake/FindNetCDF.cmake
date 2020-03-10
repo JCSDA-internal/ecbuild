@@ -57,6 +57,10 @@
 
 list( APPEND _possible_components C CXX Fortran CXX_LEGACY )
 
+## Include names for each component
+set( NetCDF_C_INCLUDE_NAME          netcdf.h )
+set( NetCDF_Fortran_INCLUDE_NAME    netcdf.mod )
+
 ## Library names for each component
 set( NetCDF_C_LIBRARY_NAME          netcdf )
 set( NetCDF_CXX_LIBRARY_NAME        netcdf_c++4 )
@@ -79,7 +83,7 @@ foreach( _comp ${${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS} )
   endif()
 endforeach()
 if( NOT _search_components )
-  set( _search_components C )
+  set( _search_components C Fortran )
 endif()
 
 ## Search hints for finding include directories and libraries
@@ -90,19 +94,30 @@ set( _search_hints
               ENV NetCDF_ROOT ENV NetCDF_DIR ENV NetCDF_PATH ENV NetCDF4_DIR
  )
 
+unset(NetCDF_INCLUDE_DIRS CACHE)
+
 ## Find include directories
-find_path(NetCDF_INCLUDE_DIRS
-  NAMES netcdf.h
-  DOC "netcdf include directories"
-  HINTS ${_search_hints}
-  PATH_SUFFIXES include ../../include
-)
-mark_as_advanced(NetCDF_INCLUDE_DIRS)
+foreach( _comp ${_search_components} )
+
+  unset(NetCDF_${_comp}_INCLUDE_DIRS CACHE)
+  find_path(NetCDF_${_comp}_INCLUDE_DIRS
+    NAMES ${NetCDF_${_comp}_INCLUDE_NAME}
+    DOC "netcdf include directories"
+    HINTS ${_search_hints}
+    PATH_SUFFIXES include ../../include
+  )
+  mark_as_advanced(NetCDF_${_comp}_INCLUDE_DIRS)
+  list( APPEND NetCDF_INCLUDE_DIRS ${NetCDF_${_comp}_INCLUDE_DIRS} )      
+  list( APPEND NetCDF_${_comp}_INCLUDE_DIRS ${NetCDF_${_comp}_INCLUDE_DIRS} )
+endforeach()
+
+unset(NetCDF_LIBRARIES CACHE)
 
 ## Find libraries for each component
 foreach( _comp ${_search_components} )
   string( TOUPPER "${_comp}" _COMP )
 
+  unset(NetCDF_${_comp}_INCLUDE_DIRS CACHE)
   find_library(NetCDF_${_comp}_LIBRARY
     NAMES ${NetCDF_${_comp}_LIBRARY_NAME}
     DOC "netcdf ${_comp} library"
@@ -113,7 +128,7 @@ foreach( _comp ${_search_components} )
   if( NetCDF_${_comp}_LIBRARY AND NOT (NetCDF_${_comp}_LIBRARY MATCHES ".a$") )
     set( NetCDF_${_comp}_LIBRARY_SHARED TRUE )
   endif()
-  if( NetCDF_${_comp}_LIBRARY_SHARED AND NetCDF_INCLUDE_DIRS )
+  if( NetCDF_${_comp}_LIBRARY_SHARED AND NetCDF_${_comp}_INCLUDE_DIRS )
     set( ${CMAKE_FIND_PACKAGE_NAME}_${_arg_${_COMP}}_FOUND TRUE )
     list( APPEND NetCDF_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )      
     list( APPEND NetCDF_${_comp}_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )
@@ -122,7 +137,7 @@ foreach( _comp ${_search_components} )
       add_library(NetCDF::NetCDF_${_comp} UNKNOWN IMPORTED)
       set_target_properties(NetCDF::NetCDF_${_comp} PROPERTIES
         IMPORTED_LOCATION "${NetCDF_${_comp}_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${NetCDF_INCLUDE_DIRS}")
+        INTERFACE_INCLUDE_DIRECTORIES "${NetCDF_${_comp}_INCLUDE_DIRS}")
     endif()
   endif()
 endforeach()
