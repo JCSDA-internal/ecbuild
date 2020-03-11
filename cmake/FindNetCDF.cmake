@@ -17,7 +17,10 @@
 #   - NetCDF_CONFIG_EXECUTABLE    - the netcdf-config executable if found
 #   - NetCDF_PARALLEL             - Boolean True if NetCDF4 has parallel IO support via hdf5 and/or pnetcdf
 #   - NetCDF_HAS_PNETCDF          - Boolean True if NetCDF4 has pnetcdf support
-
+#
+# Deprecated Defines
+#   - NetCDF_LIBRARIES            - [Deprected] Use NetCDF::NetCDF_<LANG> targets instead.
+#
 #
 # Following components are available:
 #
@@ -176,6 +179,7 @@ foreach( _comp IN LISTS _search_components )
       set( NetCDF_${_comp}_LIBRARY_SHARED FALSE )
       set( _library_type STATIC)
     else()
+      list( APPEND NetCDF_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )
       set( NetCDF_${_comp}_LIBRARY_STATIC FALSE )
       set( NetCDF_${_comp}_LIBRARY_SHARED TRUE )
       set( _library_type SHARED)
@@ -208,7 +212,6 @@ foreach( _comp IN LISTS _search_components )
         INTERFACE_INCLUDE_DIRECTORIES ${NetCDF_${_comp}_INCLUDE_DIRS}
         INTERFACE_LINK_LIBRARIES ${NetCDF_${_comp}_LIBRARIES} )
     endif()
-    list( APPEND NetCDF_LIBRARIES NetCDF::NetCDF_${_comp} )
   endif()
 endforeach()
 set(NetCDF_LIBRARIES "${NetCDF_LIBRARIES}" CACHE STRING "NetCDF library targets" FORCE)
