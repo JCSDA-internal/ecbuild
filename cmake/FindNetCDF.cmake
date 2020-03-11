@@ -126,6 +126,7 @@ foreach( _comp IN LISTS _search_components )
     list(APPEND NetCDF_INCLUDE_DIRS ${NetCDF_${_comp}_INCLUDE_DIR})
   endif()
 endforeach()
+list(REMOVE_DUPLICATES NetCDF_INCLUDE_DIRS)
 set(NetCDF_INCLUDE_DIRS "${NetCDF_INCLUDE_DIRS}" CACHE STRING "NetCDF Include directory paths" FORCE)
 
 ## Find nc-config executable
@@ -192,7 +193,6 @@ foreach( _comp IN LISTS _search_components )
   #Use nc-config to set per-component INCLUDE_DIRS variable if possible
   nc_config( ${_${_comp}_ncflags_flag} _val )
   if( _val )
-    message("_val:${_val}")
     list(TRANSFORM _val REPLACE "-I" "")
     set( NetCDF_${_comp}_INCLUDE_DIRS ${_val} )
   else()
