@@ -105,8 +105,8 @@ foreach( _comp IN ITEMS "_" "_C_" "_Fortran_" "_CXX_" )
     foreach( _var IN ITEMS ROOT PATH )
       list(APPEND _search_hints ${${_name}${_comp}${_var}} $ENV{${_name}${_comp}${_var}} )
       list(APPEND _include_search_hints 
-                ${${_name}${_comp}INCLUDE_DIR} $ENV{${_name}${_comp}INCLUDE_DIR}} 
-                ${${_name}${_comp}INCLUDE_DIRS} $ENV{${_name}${_comp}INCLUDE_DIRS}} )
+                ${${_name}${_comp}INCLUDE_DIR} $ENV{${_name}${_comp}INCLUDE_DIR}
+                ${${_name}${_comp}INCLUDE_DIRS} $ENV{${_name}${_comp}INCLUDE_DIRS} )
     endforeach()
   endforeach()
 endforeach()
@@ -175,11 +175,11 @@ foreach( _comp IN LISTS _search_components )
 
 
   if( NetCDF_${_comp}_LIBRARY )
+    list( APPEND NetCDF_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )
     if( NetCDF_${_comp}_LIBRARY MATCHES ".a$" )
       set( NetCDF_${_comp}_LIBRARY_SHARED FALSE )
       set( _library_type STATIC)
     else()
-      list( APPEND NetCDF_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )
       set( NetCDF_${_comp}_LIBRARY_SHARED TRUE )
       set( _library_type SHARED)
     endif()
