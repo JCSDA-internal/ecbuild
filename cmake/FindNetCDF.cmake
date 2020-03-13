@@ -175,11 +175,11 @@ foreach( _comp IN LISTS _search_components )
 
 
   if( NetCDF_${_comp}_LIBRARY )
-    list( APPEND NetCDF_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )
     if( NetCDF_${_comp}_LIBRARY MATCHES ".a$" )
       set( NetCDF_${_comp}_LIBRARY_SHARED FALSE )
       set( _library_type STATIC)
     else()
+      list( APPEND NetCDF_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )
       set( NetCDF_${_comp}_LIBRARY_SHARED TRUE )
       set( _library_type SHARED)
     endif()
@@ -189,10 +189,16 @@ foreach( _comp IN LISTS _search_components )
   nc_config( ${_${_comp}_nclibs_flag} _val )
   if( _val )
     set( NetCDF_${_comp}_LIBRARIES ${_val} )
+    if(NOT NetCDF_${_comp}_LIBRARY_SHARED AND NOT NetCDF_${_comp}_FOUND) #Static targets should use nc_config to get a proper link line with all necessary static targets.
+      list( APPEND NetCDF_LIBRARIES ${NetCDF_${_comp}_LIBRARIES} )
+    endif()
   else()
     set( NetCDF_${_comp}_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )
+    if(NOT NetCDF_${_comp}_LIBRARY_SHARED)
+      message(SEND_ERROR "Unable to properly find NetCDF.  Found static libraries at: ${NetCDF_${_comp}_LIBRARY} but could not run nc-config: ${NetCDF_CONFIG_EXECUTABLE}")
+    endif()
   endif()
-  
+
   #Use nc-config to set per-component INCLUDE_DIRS variable if possible
   nc_config( ${_${_comp}_ncflags_flag} _val )
   if( _val )
@@ -213,6 +219,9 @@ foreach( _comp IN LISTS _search_components )
     endif()
   endif()
 endforeach()
+if(NetCDF_LIBRARIES AND NetCDF_${_comp}_LIBRARY_SHARED)
+    list(REMOVE_DUPLICATES NetCDF_LIBRARIES)
+endif()
 set(NetCDF_LIBRARIES "${NetCDF_LIBRARIES}" CACHE STRING "NetCDF library targets" FORCE)
 
 ## Find version via netcdf-config if possible
@@ -255,6 +264,13 @@ find_package_handle_standard_args( ${CMAKE_FIND_PACKAGE_NAME}
   REQUIRED_VARS NetCDF_INCLUDE_DIRS NetCDF_LIBRARIES
   VERSION_VAR NetCDF_VERSION
   HANDLE_COMPONENTS )
+
+#Record found components to avoid duplication in NetCDF_LIBRARIES for static libraries
+foreach( _comp IN LISTS _search_components )
+    if( NetCDF_${_comp}_FOUND )
+        set(NetCDF_${_comp}_FOUND ${NetCDF_${_comp}_FOUND} CACHE BOOL "NetCDF ${_comp} Found" FORCE)
+    endif()
+endforeach()
 
 if( ${CMAKE_FIND_PACKAGE_NAME}_FOUND AND NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY )
   message( STATUS "Find${CMAKE_FIND_PACKAGE_NAME} defines targets:" )
