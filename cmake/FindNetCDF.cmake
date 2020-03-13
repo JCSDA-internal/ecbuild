@@ -19,7 +19,7 @@
 #   - NetCDF_HAS_PNETCDF          - Boolean True if NetCDF4 has pnetcdf support
 #
 # Deprecated Defines
-#   - NetCDF_LIBRARIES            - [Deprected] Use NetCDF::NetCDF_<LANG> targets instead.
+#   - NetCDF_LIBRARIES            - [Deprecated] Use NetCDF::NetCDF_<LANG> targets instead.
 #
 #
 # Following components are available:
@@ -50,20 +50,17 @@
 #
 # Notes:
 #
-#   - Each variable is also available in fully uppercased version
-#   - Preferred naming for this package and it's variables is "NetCDF"
-#     For compatibility, each variable not in targets, can substitute "NetCDF" with
-#        * NetCDF4
-#        * NETCDF
-#        * NETCDF4
-#   - Preferred component capitalisation follows the CMake LANGUAGES variables.
-#     For compatibility, capitalisation of COMPONENT arguments does not matter.
-#     The <comp> part of variables will be defined with:
-#        * capitalisation as defined above
-#        * Uppercase capitalisation
-#        * capitalisation as used in find_package() arguments
-#   - If no components are defined, all components will be searched without guarantee that the 
-#     required component is available.
+#   - Use "NetCDF::NetCDF_<LANG>" targets only.  NetCDF_LIBRARIES exists for backwards compatibility and should not be used.
+#     - These targets have all the knowledge of include directories and library search directories, and a single
+#       call to target_link_libraries will provide all these transitive properties to your target.  Normally all that is
+#       needed to build and link against NetCDF is, e.g.:
+#           target_link_libraries(my_c_tgt PUBLIC NetCDF::NetCDF_C)
+#   - "NetCDF" is always the preferred naming for this package, its targets, variables, and environment variables
+#     - For compatibility, some variables are also set/checked using alternate names NetCDF4, NETCDF, or NETCDF4
+#     - Environments relying on these older environment variable names should move to using a "NetCDF_ROOT" environment variable
+#   - Preferred component capitalization follows the CMake LANGUAGES variables: i.e., C, Fortran, CXX
+#     - For compatibility, alternate capitalizations are supported but should not be used.
+#   - If no components are defined, all components will be searched
 #
 
 list( APPEND _possible_components C CXX Fortran CXX_LEGACY )
