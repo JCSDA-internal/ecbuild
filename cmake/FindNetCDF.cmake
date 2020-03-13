@@ -110,6 +110,7 @@ foreach( _comp IN ITEMS "_" "_C_" "_Fortran_" "_CXX_" )
     endforeach()
   endforeach()
 endforeach()
+list(APPEND _search_hints ${NETCDF} $ENV{NETCDF}) #Old-school HPC module env variable names
 
 ## Find headers for each component
 set(NetCDF_INCLUDE_DIRS)
