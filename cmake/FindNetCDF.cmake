@@ -33,9 +33,8 @@
 #
 #   - NetCDF_<comp>_FOUND         - whether the component is found
 #   - NetCDF_<comp>_LIBRARIES     - the libraries for the component
-#   - NetCDF_<comp>_LIBRARY_STATIC - Boolean is true if libraries for component are static
 #   - NetCDF_<comp>_LIBRARY_SHARED - Boolean is true if libraries for component are shared
-#   - NetCDF_<comp>_INCLUDE_DIRS  - the include directories for specfied component
+#   - NetCDF_<comp>_INCLUDE_DIRS  - the include directories for specified component
 #   - NetCDF::NetCDF_<comp>       - target of component to be used with target_link_libraries()
 #
 # The following paths will be searched in order if set in CMake (first priority) or environment (second priority)
@@ -53,12 +52,12 @@
 #
 #   - Each variable is also available in fully uppercased version
 #   - Preferred naming for this package and it's variables is "NetCDF"
-#     For compatability, each variable not in targets, can subsititue "NetCDF" with
+#     For compatibility, each variable not in targets, can substitute "NetCDF" with
 #        * NetCDF4
 #        * NETCDF
 #        * NETCDF4
 #   - Preferred component capitalisation follows the CMake LANGUAGES variables.
-#     For compatability, capitalisation of COMPONENT arguments does not matter.
+#     For compatibility, capitalisation of COMPONENT arguments does not matter.
 #     The <comp> part of variables will be defined with:
 #        * capitalisation as defined above
 #        * Uppercase capitalisation
@@ -102,7 +101,7 @@ endif()
 
 ## Search hints for finding include directories and libraries
 foreach( _comp IN ITEMS "_" "_C_" "_Fortran_" "_CXX_" )
-  foreach( _name IN ITEMS NetCDF4 NetCDF NETCDF4 NETCDF4 )
+  foreach( _name IN ITEMS NetCDF4 NetCDF NETCDF4 NETCDF )
     foreach( _var IN ITEMS ROOT PATH )
       list(APPEND _search_hints ${${_name}${_comp}${_var}} $ENV{${_name}${_comp}${_var}} )
       list(APPEND _include_search_hints 
@@ -129,7 +128,9 @@ foreach( _comp IN LISTS _search_components )
     list(APPEND NetCDF_INCLUDE_DIRS ${NetCDF_${_comp}_INCLUDE_DIR})
   endif()
 endforeach()
-list(REMOVE_DUPLICATES NetCDF_INCLUDE_DIRS)
+if(NetCDF_INCLUDE_DIRS)
+    list(REMOVE_DUPLICATES NetCDF_INCLUDE_DIRS)
+endif()
 set(NetCDF_INCLUDE_DIRS "${NetCDF_INCLUDE_DIRS}" CACHE STRING "NetCDF Include directory paths" FORCE)
 
 ## Find nc-config executable
@@ -175,12 +176,10 @@ foreach( _comp IN LISTS _search_components )
 
   if( NetCDF_${_comp}_LIBRARY )
     if( NetCDF_${_comp}_LIBRARY MATCHES ".a$" )
-      set( NetCDF_${_comp}_LIBRARY_STATIC TRUE )
       set( NetCDF_${_comp}_LIBRARY_SHARED FALSE )
       set( _library_type STATIC)
     else()
       list( APPEND NetCDF_LIBRARIES ${NetCDF_${_comp}_LIBRARY} )
-      set( NetCDF_${_comp}_LIBRARY_STATIC FALSE )
       set( NetCDF_${_comp}_LIBRARY_SHARED TRUE )
       set( _library_type SHARED)
     endif()
