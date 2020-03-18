@@ -132,17 +132,19 @@ endif()
 set(NetCDF_INCLUDE_DIRS "${NetCDF_INCLUDE_DIRS}" CACHE STRING "NetCDF Include directory paths" FORCE)
 
 ## Find nc-config, nf-config and ncxx4-config executables
-list(APPEND CONF_LIST "c" "f" "cxx4")
-list(APPEND COMP_LIST "C" "Fortran" "CXX")
-foreach( _conf IN LISTS CONF_LIST )
-  list(FIND CONF_LIST ${_conf} _indx)
-  list(GET  COMP_LIST ${_indx} _comp)
+list(APPEND _conflist "c" "f" "cxx4")
+list(APPEND _complist "C" "Fortran" "CXX")
+foreach( _conf IN LISTS _conflist )
+  list(FIND _conflist ${_conf} _indx)
+  list(GET  _complist ${_indx} _comp)
   find_program( NetCDF_${_comp}_CONFIG_EXECUTABLE
       NAMES n${_conf}-config
     HINTS ${NetCDF_INCLUDE_DIRS} ${_include_search_hints} ${_search_hints}
     PATH_SUFFIXES bin Bin ../bin ../../bin
       DOC "NetCDF n${_conf}-config helper" )
 endforeach()
+unset(_conflist)
+unset(_complist)
 
 set(_C_libs_flag --libs)
 set(_Fortran_libs_flag --flibs)
