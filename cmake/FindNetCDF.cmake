@@ -259,7 +259,7 @@ endif ()
 ## Detect additional package properties
 netcdf_config(${NetCDF_C_CONFIG_EXECUTABLE} --has-parallel4 _val)
 if( NOT _val )
-    netcdf_config(NetCDF_C_CONFIG_EXECUTABLE --has-parallel _val)
+    netcdf_config(${NetCDF_C_CONFIG_EXECUTABLE} --has-parallel _val)
 endif()
 set(NetCDF_PARALLEL ${_val} CACHE STRING "NetCDF has parallel IO capability via pnetcdf or hdf5." FORCE)
 
@@ -279,6 +279,7 @@ endforeach()
 
 if( ${CMAKE_FIND_PACKAGE_NAME}_FOUND AND NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY )
   message( STATUS "Find${CMAKE_FIND_PACKAGE_NAME} defines targets:" )
+  message( STATUS "  - NetCDF_VERSION [${NetCDF_VERSION}]")
   message( STATUS "  - NetCDF_PARALLEL [${NetCDF_PARALLEL}]")
   foreach( _comp ${_search_components} )
     string( TOUPPER "${_comp}" _COMP )
