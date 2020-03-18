@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-# Try to find NetCDF includes and library.  
+# Try to find NetCDF includes and library.
 # Supports static and shared libaries and allows each component to be found in sepearte prefixes.
 #
 # This module defines
@@ -101,7 +101,7 @@ foreach( _comp IN ITEMS "_" "_C_" "_Fortran_" "_CXX_" )
   foreach( _name IN ITEMS NetCDF4 NetCDF NETCDF4 NETCDF )
     foreach( _var IN ITEMS ROOT PATH )
       list(APPEND _search_hints ${${_name}${_comp}${_var}} $ENV{${_name}${_comp}${_var}} )
-      list(APPEND _include_search_hints 
+      list(APPEND _include_search_hints
                 ${${_name}${_comp}INCLUDE_DIR} $ENV{${_name}${_comp}INCLUDE_DIR}
                 ${${_name}${_comp}INCLUDE_DIRS} $ENV{${_name}${_comp}INCLUDE_DIRS} )
     endforeach()
@@ -187,7 +187,7 @@ foreach( _comp IN LISTS _search_components )
       set( _library_type SHARED)
     endif()
   endif()
-  
+
   #Use nc-config to set per-component LIBRARIES variable if possible
   netcdf_config( ${NetCDF_${_comp}_CONFIG_EXECUTABLE} ${_${_comp}_libs_flag} _val )
   if( _val )
@@ -299,7 +299,7 @@ foreach( _prefix NetCDF NetCDF4 NETCDF NETCDF4 ${CMAKE_FIND_PACKAGE_NAME} )
   set( ${_prefix}_FOUND        ${${CMAKE_FIND_PACKAGE_NAME}_FOUND} )
   set( ${_prefix}_CONFIG_EXECUTABLE ${NetCDF_CONFIG_EXECUTABLE} )
   set( ${_prefix}_PARALLEL ${NetCDF_PARALLEL} )
-  
+
   foreach( _comp ${_search_components} )
     string( TOUPPER "${_comp}" _COMP )
     set( _arg_comp ${_arg_${_COMP}} )
