@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-# Try to find NetCDF includes and library.  
+# Try to find NetCDF includes and library.
 # Supports static and shared libaries and allows each component to be found in sepearte prefixes.
 #
 # This module defines
@@ -101,7 +101,7 @@ foreach( _comp IN ITEMS "_" "_C_" "_Fortran_" "_CXX_" )
   foreach( _name IN ITEMS NetCDF4 NetCDF NETCDF4 NETCDF )
     foreach( _var IN ITEMS ROOT PATH )
       list(APPEND _search_hints ${${_name}${_comp}${_var}} $ENV{${_name}${_comp}${_var}} )
-      list(APPEND _include_search_hints 
+      list(APPEND _include_search_hints
                 ${${_name}${_comp}INCLUDE_DIR} $ENV{${_name}${_comp}INCLUDE_DIR}
                 ${${_name}${_comp}INCLUDE_DIRS} $ENV{${_name}${_comp}INCLUDE_DIRS} )
     endforeach()
@@ -131,24 +131,31 @@ if(NetCDF_INCLUDE_DIRS)
 endif()
 set(NetCDF_INCLUDE_DIRS "${NetCDF_INCLUDE_DIRS}" CACHE STRING "NetCDF Include directory paths" FORCE)
 
-## Find nc-config executable
-find_program( NetCDF_CONFIG_EXECUTABLE
-    NAMES nc-config
+## Find nc-config, nf-config and ncxx4-config executables
+list(APPEND _conflist "c" "f" "cxx4")
+list(APPEND _complist "C" "Fortran" "CXX")
+foreach( _conf IN LISTS _conflist )
+  list(FIND _conflist ${_conf} _indx)
+  list(GET  _complist ${_indx} _comp)
+  find_program( NetCDF_${_comp}_CONFIG_EXECUTABLE
+      NAMES n${_conf}-config
     HINTS ${NetCDF_INCLUDE_DIRS} ${_include_search_hints} ${_search_hints}
     PATH_SUFFIXES bin Bin ../bin ../../bin
-    DOC "NetCDF nc-config helper" )
-ecbuild_debug("NetCDF_CONFIG_EXECUTABLE:${NetCDF_CONFIG_EXECUTABLE}")
+      DOC "NetCDF n${_conf}-config helper" )
+endforeach()
+unset(_conflist)
+unset(_complist)
 
-set(_C_nclibs_flag --libs)
-set(_Fortran_nclibs_flag --flibs)
-set(_CXX_nclibs_flag --cxx4libs)
-set(_C_ncflags_flag --cflags)
-set(_Fortran_ncflags_flag --fflags)
-set(_CXX_ncflags_flag --cxx4flags)
-function(nc_config flag output_var)
+set(_C_libs_flag --libs)
+set(_Fortran_libs_flag --flibs)
+set(_CXX_libs_flag --libs)
+set(_C_flags_flag --cflags)
+set(_Fortran_flags_flag --fflags)
+set(_CXX_flags_flag --cflags)
+function(netcdf_config exec flag output_var)
   set(${output_var} False PARENT_SCOPE)
-  if( NetCDF_CONFIG_EXECUTABLE )
-    execute_process( COMMAND ${NetCDF_CONFIG_EXECUTABLE} ${flag} RESULT_VARIABLE _ret OUTPUT_VARIABLE _val)
+  if( exec )
+    execute_process( COMMAND ${exec} ${flag} RESULT_VARIABLE _ret OUTPUT_VARIABLE _val)
     if( _ret EQUAL 0 )
       string( STRIP ${_val} _val )
       set( ${output_var} ${_val} PARENT_SCOPE )
@@ -182,9 +189,9 @@ foreach( _comp IN LISTS _search_components )
       set( _library_type SHARED)
     endif()
   endif()
-  
+
   #Use nc-config to set per-component LIBRARIES variable if possible
-  nc_config( ${_${_comp}_nclibs_flag} _val )
+  netcdf_config( ${NetCDF_${_comp}_CONFIG_EXECUTABLE} ${_${_comp}_libs_flag} _val )
   if( _val )
     set( NetCDF_${_comp}_LIBRARIES ${_val} )
     if(NOT NetCDF_${_comp}_LIBRARY_SHARED AND NOT NetCDF_${_comp}_FOUND) #Static targets should use nc_config to get a proper link line with all necessary static targets.
@@ -198,7 +205,7 @@ foreach( _comp IN LISTS _search_components )
   endif()
 
   #Use nc-config to set per-component INCLUDE_DIRS variable if possible
-  nc_config( ${_${_comp}_ncflags_flag} _val )
+  netcdf_config( ${NetCDF_${_comp}_CONFIG_EXECUTABLE} ${_${_comp}_flags_flag} _val )
   if( _val )
     list(TRANSFORM _val REPLACE "-I" "")
     set( NetCDF_${_comp}_INCLUDE_DIRS ${_val} )
@@ -224,8 +231,8 @@ set(NetCDF_LIBRARIES "${NetCDF_LIBRARIES}" CACHE STRING "NetCDF library targets"
 
 ## Find version via netcdf-config if possible
 if (NetCDF_INCLUDE_DIRS)
-  if( NetCDF_CONFIG_EXECUTABLE )
-    nc_config(--version _vers)
+  if( NetCDF_C_CONFIG_EXECUTABLE )
+    netcdf_config( ${NetCDF_C_CONFIG_EXECUTABLE} --version _vers )
     if( _vers )
       string(REGEX REPLACE ".* ((([0-9]+)\\.)+([0-9]+)).*" "\\1" NetCDF_VERSION "${_vers}" )
     endif()
@@ -250,9 +257,9 @@ if (NetCDF_INCLUDE_DIRS)
 endif ()
 
 ## Detect additional package properties
-nc_config(--has-parallel4 _val)
+netcdf_config(${NetCDF_C_CONFIG_EXECUTABLE} --has-parallel4 _val)
 if( NOT _val )
-    nc_config(--has-parallel _val)
+    netcdf_config(${NetCDF_C_CONFIG_EXECUTABLE} --has-parallel _val)
 endif()
 set(NetCDF_PARALLEL ${_val} CACHE STRING "NetCDF has parallel IO capability via pnetcdf or hdf5." FORCE)
 
@@ -272,10 +279,11 @@ endforeach()
 
 if( ${CMAKE_FIND_PACKAGE_NAME}_FOUND AND NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY )
   message( STATUS "Find${CMAKE_FIND_PACKAGE_NAME} defines targets:" )
-  message( STATUS "  - NetCDF_CONFIG_EXECUTABLE [${NetCDF_CONFIG_EXECUTABLE}]")
+  message( STATUS "  - NetCDF_VERSION [${NetCDF_VERSION}]")
   message( STATUS "  - NetCDF_PARALLEL [${NetCDF_PARALLEL}]")
   foreach( _comp ${_search_components} )
     string( TOUPPER "${_comp}" _COMP )
+    message( STATUS "  - NetCDF_${_comp}_CONFIG_EXECUTABLE [${NetCDF_${_comp}_CONFIG_EXECUTABLE}]")
     if( ${CMAKE_FIND_PACKAGE_NAME}_${_arg_${_COMP}}_FOUND )
       get_filename_component(_root ${NetCDF_${_comp}_INCLUDE_DIR}/.. ABSOLUTE)
       if( NetCDF_${_comp}_LIBRARY_SHARED )
@@ -294,7 +302,7 @@ foreach( _prefix NetCDF NetCDF4 NETCDF NETCDF4 ${CMAKE_FIND_PACKAGE_NAME} )
   set( ${_prefix}_FOUND        ${${CMAKE_FIND_PACKAGE_NAME}_FOUND} )
   set( ${_prefix}_CONFIG_EXECUTABLE ${NetCDF_CONFIG_EXECUTABLE} )
   set( ${_prefix}_PARALLEL ${NetCDF_PARALLEL} )
-  
+
   foreach( _comp ${_search_components} )
     string( TOUPPER "${_comp}" _COMP )
     set( _arg_comp ${_arg_${_COMP}} )
