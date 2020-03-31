@@ -111,7 +111,11 @@ list(APPEND _search_hints ${NETCDF} $ENV{NETCDF}) #Old-school HPC module env var
 
 ## Find headers for each component
 set(NetCDF_INCLUDE_DIRS)
+set(_new_search_components)
 foreach( _comp IN LISTS _search_components )
+  if(NOT ${PROJECT_NAME}_NetCDF_${_comp}_FOUND)
+      list(APPEND _new_search_components ${_comp})
+  endif()
   find_file(NetCDF_${_comp}_INCLUDE_FILE
     NAMES ${NetCDF_${_comp}_INCLUDE_NAME}
     DOC "NetCDF ${_comp} include directory"
@@ -270,18 +274,20 @@ find_package_handle_standard_args( ${CMAKE_FIND_PACKAGE_NAME}
   VERSION_VAR NetCDF_VERSION
   HANDLE_COMPONENTS )
 
-#Record found components to avoid duplication in NetCDF_LIBRARIES for static libraries
 foreach( _comp IN LISTS _search_components )
     if( NetCDF_${_comp}_FOUND )
+        #Record found components to avoid duplication in NetCDF_LIBRARIES for static libraries
         set(NetCDF_${_comp}_FOUND ${NetCDF_${_comp}_FOUND} CACHE BOOL "NetCDF ${_comp} Found" FORCE)
+        #Set a per-package, per-component found variable to communicate between multiple calls to find_package()
+        set(${PROJECT_NAME}_NetCDF_${_comp}_FOUND True)
     endif()
 endforeach()
 
-if( ${CMAKE_FIND_PACKAGE_NAME}_FOUND AND NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY )
+if( ${CMAKE_FIND_PACKAGE_NAME}_FOUND AND NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY AND _new_search_components)
   message( STATUS "Find${CMAKE_FIND_PACKAGE_NAME} defines targets:" )
   message( STATUS "  - NetCDF_VERSION [${NetCDF_VERSION}]")
   message( STATUS "  - NetCDF_PARALLEL [${NetCDF_PARALLEL}]")
-  foreach( _comp ${_search_components} )
+  foreach( _comp IN LISTS _new_search_components )
     string( TOUPPER "${_comp}" _COMP )
     message( STATUS "  - NetCDF_${_comp}_CONFIG_EXECUTABLE [${NetCDF_${_comp}_CONFIG_EXECUTABLE}]")
     if( ${CMAKE_FIND_PACKAGE_NAME}_${_arg_${_COMP}}_FOUND )
