@@ -269,10 +269,13 @@ set(NetCDF_PARALLEL ${_val} CACHE STRING "NetCDF has parallel IO capability via 
 
 ## Finalize find_package
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args( ${CMAKE_FIND_PACKAGE_NAME}
-  REQUIRED_VARS NetCDF_INCLUDE_DIRS NetCDF_LIBRARIES
-  VERSION_VAR NetCDF_VERSION
-  HANDLE_COMPONENTS )
+
+if(NOT NetCDF_FOUND OR _new_search_components)
+    find_package_handle_standard_args( ${CMAKE_FIND_PACKAGE_NAME}
+        REQUIRED_VARS NetCDF_INCLUDE_DIRS NetCDF_LIBRARIES
+        VERSION_VAR NetCDF_VERSION
+        HANDLE_COMPONENTS )
+endif()
 
 foreach( _comp IN LISTS _search_components )
     if( NetCDF_${_comp}_FOUND )
