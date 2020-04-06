@@ -139,14 +139,39 @@
 # CFLAGS : optional
 #   list of C compiler flags to use for all C source files
 #
+#   See usage note below.
+#
 # CXXFLAGS : optional
 #   list of C++ compiler flags to use for all C++ source files
+#
+#   See usage note below.
 #
 # FFLAGS : optional
 #   list of Fortran compiler flags to use for all Fortran source files
 #
+#   See usage note below.
+#
 # LINKER_LANGUAGE : optional
 #   sets the LINKER_LANGUAGE property on the target
+#
+# Usage
+# -----
+#
+# The ``CFLAGS``, ``CXXFLAGS`` and ``FFLAGS`` options apply the given compiler
+# flags to all C, C++ and Fortran sources passed to this command, respectively.
+# If any two ``ecbuild_add_executable``, ``ecbuild_add_library`` or
+# ``ecbuild_add_test`` commands are passed the *same* source file and each sets
+# a different value for the compiler flags to be applied to that file (including
+# when one command adds flags and another adds none), then the two commands
+# will be in conflict and the result may not be as expected.
+#
+# For this reason it is recommended not to use the ``*FLAGS`` options when
+# multiple targets share the same source files, unless the exact same flags are
+# applied to those sources by each relevant command.
+#
+# Care should also be taken to ensure that these commands are not passed source
+# files which are not required to build the target, if those sources are also
+# passed to other commands which set different compiler flags.
 #
 ##############################################################################
 
@@ -279,7 +304,13 @@ function( ecbuild_add_test )
         list( APPEND _all_objects $<TARGET_OBJECTS:${_obj}> )
       endforeach()
 
-      add_executable( ${_PAR_TARGET} ${_PAR_SOURCES} ${_all_objects} )
+      ecbuild_separate_sources( TARGET ${_PAR_TARGET} SOURCES ${_PAR_SOURCES} )
+
+      if( ${_PAR_TARGET}_cuda_srcs AND CUDA_FOUND )
+        cuda_add_executable( ${_PAR_TARGET} ${_PAR_SOURCES}  ${_all_objects} )
+      else()
+        add_executable( ${_PAR_TARGET} ${_PAR_SOURCES} ${_all_objects} )
+      endif()
 
       # add include dirs if defined
       if( DEFINED _PAR_INCLUDES )
@@ -308,9 +339,6 @@ function( ecbuild_add_test )
         target_link_libraries( ${_PAR_TARGET} ${lib} )
         ecbuild_debug("ecbuild_add_test(${_PAR_TARGET}): [${skipped_lib}] not found - not linking")
       endif()
-
-      # filter sources
-      ecbuild_separate_sources( TARGET ${_PAR_TARGET} SOURCES ${_PAR_SOURCES} )
 
       # Override compilation flags on a per source file basis
       ecbuild_target_flags( ${_PAR_TARGET} "${_PAR_CFLAGS}" "${_PAR_CXXFLAGS}" "${_PAR_FFLAGS}" )
