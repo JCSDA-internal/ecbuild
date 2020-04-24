@@ -27,7 +27,6 @@
 #   - C                           - C interface to NetCDF          (netcdf)
 #   - CXX                         - CXX4 interface to NetCDF       (netcdf_c++4)
 #   - Fortran                     - Fortran interface to NetCDF    (netcdff)
-#   - CXX_LEGACY                  - Legacy C++ interface to NetCDF (netcdf_c++)
 #
 # For each component the following are defined:
 #
@@ -63,7 +62,7 @@
 #   - If no components are defined, all components will be searched
 #
 
-list( APPEND _possible_components C CXX Fortran CXX_LEGACY )
+list( APPEND _possible_components C CXX Fortran )
 
 ## Include names for each component
 set( NetCDF_C_INCLUDE_NAME          netcdf.h )
@@ -73,7 +72,6 @@ set( NetCDF_Fortran_INCLUDE_NAME    netcdf.mod )
 ## Library names for each component
 set( NetCDF_C_LIBRARY_NAME          netcdf )
 set( NetCDF_CXX_LIBRARY_NAME        netcdf_c++4 )
-set( NetCDF_CXX_LEGACY_LIBRARY_NAME netcdf_c++ )
 set( NetCDF_Fortran_LIBRARY_NAME    netcdff )
 
 ## Enumerate search components
@@ -107,7 +105,13 @@ foreach( _comp IN ITEMS "_" "_C_" "_Fortran_" "_CXX_" )
     endforeach()
   endforeach()
 endforeach()
-list(APPEND _search_hints ${NETCDF} $ENV{NETCDF}) #Old-school HPC module env variable names
+#Old-school HPC module env variable names
+foreach( _name IN ITEMS NetCDF4 NetCDF NETCDF4 NETCDF )
+  foreach( _comp IN ITEMS "_C" "_Fortran" "_CXX" )
+    list(APPEND _search_hints ${${_name}}         $ENV{${_name}})
+    list(APPEND _search_hints ${${_name}${_comp}} $ENV{${_name}${_comp}})
+  endforeach()
+endforeach()
 
 ## Find headers for each component
 set(NetCDF_INCLUDE_DIRS)
@@ -135,27 +139,29 @@ if(NetCDF_INCLUDE_DIRS)
 endif()
 set(NetCDF_INCLUDE_DIRS "${NetCDF_INCLUDE_DIRS}" CACHE STRING "NetCDF Include directory paths" FORCE)
 
-## Find nc-config, nf-config and ncxx4-config executables
-list(APPEND _conflist "c" "f" "cxx4")
-list(APPEND _complist "C" "Fortran" "CXX")
-foreach( _conf IN LISTS _conflist )
-  list(FIND _conflist ${_conf} _indx)
-  list(GET  _complist ${_indx} _comp)
+## Find n*-config executables for search components
+foreach( _comp IN LISTS _search_components )
+  if( _comp MATCHES "^(C)$" )
+    set(_conf "c")
+  elseif( _comp MATCHES "^(Fortran)$" )
+    set(_conf "f")
+  elseif( _comp MATCHES "^(CXX)$" )
+    set(_conf "cxx4")
+  endif()
   find_program( NetCDF_${_comp}_CONFIG_EXECUTABLE
       NAMES n${_conf}-config
-    HINTS ${NetCDF_INCLUDE_DIRS} ${_include_search_hints} ${_search_hints}
-    PATH_SUFFIXES bin Bin ../bin ../../bin
+      HINTS ${NetCDF_INCLUDE_DIRS} ${_include_search_hints} ${_search_hints}
+      PATH_SUFFIXES bin Bin ../bin ../../bin
       DOC "NetCDF n${_conf}-config helper" )
+    ecbuild_debug("NetCDF_${_comp}_CONFIG_EXECUTABLE: ${NetCDF_${_comp}_CONFIG_EXECUTABLE}")
 endforeach()
-unset(_conflist)
-unset(_complist)
 
 set(_C_libs_flag --libs)
 set(_Fortran_libs_flag --flibs)
 set(_CXX_libs_flag --libs)
-set(_C_flags_flag --cflags)
-set(_Fortran_flags_flag --fflags)
-set(_CXX_flags_flag --cflags)
+set(_C_includes_flag --includedir)
+set(_Fortran_includes_flag --includedir)
+set(_CXX_includes_flag --includedir)
 function(netcdf_config exec flag output_var)
   set(${output_var} False PARENT_SCOPE)
   if( exec )
@@ -209,9 +215,9 @@ foreach( _comp IN LISTS _search_components )
   endif()
 
   #Use nc-config to set per-component INCLUDE_DIRS variable if possible
-  netcdf_config( ${NetCDF_${_comp}_CONFIG_EXECUTABLE} ${_${_comp}_flags_flag} _val )
+  netcdf_config( ${NetCDF_${_comp}_CONFIG_EXECUTABLE} ${_${_comp}_includes_flag} _val )
   if( _val )
-    list(TRANSFORM _val REPLACE "-I" "")
+    string( REPLACE " " ";" _val ${_val} )
     set( NetCDF_${_comp}_INCLUDE_DIRS ${_val} )
   else()
     set( NetCDF_${_comp}_INCLUDE_DIRS ${NetCDF_${_comp}_INCLUDE_DIR} )
@@ -223,7 +229,7 @@ foreach( _comp IN LISTS _search_components )
       add_library(NetCDF::NetCDF_${_comp} ${_library_type} IMPORTED)
       set_target_properties(NetCDF::NetCDF_${_comp} PROPERTIES
         IMPORTED_LOCATION ${NetCDF_${_comp}_LIBRARY}
-        INTERFACE_INCLUDE_DIRECTORIES ${NetCDF_${_comp}_INCLUDE_DIRS}
+        INTERFACE_INCLUDE_DIRECTORIES "${NetCDF_${_comp}_INCLUDE_DIRS}"
         INTERFACE_LINK_LIBRARIES ${NetCDF_${_comp}_LIBRARIES} )
     endif()
   endif()
@@ -262,10 +268,14 @@ endif ()
 
 ## Detect additional package properties
 netcdf_config(${NetCDF_C_CONFIG_EXECUTABLE} --has-parallel4 _val)
-if( NOT _val )
-    netcdf_config(${NetCDF_C_CONFIG_EXECUTABLE} --has-parallel _val)
+if( NOT _val MATCHES "^(yes|no)$" )
+  netcdf_config(${NetCDF_C_CONFIG_EXECUTABLE} --has-parallel _val)
 endif()
-set(NetCDF_PARALLEL ${_val} CACHE STRING "NetCDF has parallel IO capability via pnetcdf or hdf5." FORCE)
+if( _val MATCHES "^(yes)$" )
+  set(NetCDF_PARALLEL TRUE CACHE STRING "NetCDF has parallel IO capability via pnetcdf or hdf5." FORCE)
+else()
+  set(NetCDF_PARALLEL FALSE CACHE STRING "NetCDF has no parallel IO capability." FORCE)
+endif()
 
 ## Finalize find_package
 include(FindPackageHandleStandardArgs)
