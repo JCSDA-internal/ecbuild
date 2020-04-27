@@ -81,7 +81,7 @@ foreach( _comp ${_possible_components} )
   set( _name_${_COMP} ${_comp} )
 endforeach()
 
-unset( _search_components )
+set( _search_components C)
 foreach( _comp ${${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS} )
   string( TOUPPER "${_comp}" _COMP )
   set( _arg_${_COMP} ${_comp} )
@@ -90,9 +90,7 @@ foreach( _comp ${${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS} )
     ecbuild_error( "Find${CMAKE_FIND_PACKAGE_NAME}: COMPONENT ${_comp} is not a valid component. Valid components: ${_possible_components}" )
   endif()
 endforeach()
-if( NOT _search_components )
-  set( _search_components C)
-endif()
+list( REMOVE_DUPLICATES _search_components )
 
 ## Search hints for finding include directories and libraries
 foreach( _comp IN ITEMS "_" "_C_" "_Fortran_" "_CXX_" )
@@ -139,8 +137,8 @@ if(NetCDF_INCLUDE_DIRS)
 endif()
 set(NetCDF_INCLUDE_DIRS "${NetCDF_INCLUDE_DIRS}" CACHE STRING "NetCDF Include directory paths" FORCE)
 
-## Find nc*-config executables for C and search components
-foreach( _comp IN LISTS _search_components ITEMS "C")
+## Find n*-config executables for search components
+foreach( _comp IN LISTS _search_components)
   if( _comp MATCHES "^(C)$" )
     set(_conf "c")
   elseif( _comp MATCHES "^(Fortran)$" )
