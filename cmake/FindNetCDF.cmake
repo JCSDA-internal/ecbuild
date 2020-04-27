@@ -138,7 +138,7 @@ endif()
 set(NetCDF_INCLUDE_DIRS "${NetCDF_INCLUDE_DIRS}" CACHE STRING "NetCDF Include directory paths" FORCE)
 
 ## Find n*-config executables for search components
-foreach( _comp IN LISTS _search_components)
+foreach( _comp IN LISTS _search_components )
   if( _comp MATCHES "^(C)$" )
     set(_conf "c")
   elseif( _comp MATCHES "^(Fortran)$" )
