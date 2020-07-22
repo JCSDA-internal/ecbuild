@@ -97,6 +97,7 @@ find_package_handle_standard_args(
 
 #Hide non-documented variables reserved for internal/advanced usage
 mark_as_advanced(GPTL_VERSION_STRING
+                 GPTL_PREFIX
                  GPTL_INCLUDE_DIR
                  GPTL_MODULE_DIR
                  GPTL_COMPILE_OPTIONS
@@ -108,6 +109,7 @@ mark_as_advanced(GPTL_VERSION_STRING
 #Debugging output
 message(DEBUG "GPTL_FOUND: ${GPTL_FOUND}")
 message(DEBUG "GPTL_VERSION_STRING: ${GPTL_VERSION_STRING}")
+message(DEBUG "GPTL_PREFIX: ${GPTL_PREFIX}")
 message(DEBUG "GPTL_BIN_DIR: ${GPTL_BIN_DIR}")
 message(DEBUG "GPTL_INCLUDE_DIR: ${GPTL_INCLUDE_DIR}")
 message(DEBUG "GPTL_MODULE_DIR: ${GPTL_MODULE_DIR}")
