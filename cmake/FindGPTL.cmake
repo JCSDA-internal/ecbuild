@@ -4,17 +4,46 @@
 #
 # Find the GPTL: General Purpose Timing Library (https://jmrosinski.github.io/GPTL/)
 #
-# This find modules uses pkg-config to locate GPTL and glean the appropriate flags, directories, link dependencies.
+# This find module sets the following variables and targets:
 #
-# GPTL_FOUND - True if GPTL was found
-# GPTL::GPTL - Imported interface target to pass to target_link_libraries()
-# GPTL_VERSION_STRING - Version of installed GPTL
-# GPTL_BIN_DIR - GPTL binary directory
-# GPTL_HAS_PKG_CONFIG -  Found installed gptl.pc file -- pkg-config support enabled
+# Variables:
+#  GPTL_FOUND - True if GPTL was found
+#  GPTL_VERSION_STRING - Version of installed GPTL
+#  GPTL_BIN_DIR - GPTL binary directory
+#  GPTL_HAS_PKG_CONFIG - GPTL was found with installed `gptl.pc` and pkg-config.  This indicates full support
+#                        for compiler and linker flags as exported by GPTL.
+# Targets:
+#  GPTL::GPTL - Imported interface target to pass to target_link_libraries()
 #
+# NOTE: This find modules uses `pkg-config` to locate GPTL and glean the appropriate flags, directories,
+# and link dependency ordering.  For this to work both a `pkg-config` executable and a `gptl.pc`
+# config file need to be found.
+# * To find the `pkg-config` executable, ensure it is on your PATH.
+#   * For non-standard locations the official CMake FindPkgConfig uses Cmake variable `PKG_CONFIG_EXECUTABLE`
+#     or environment variable `PKG_CONFIG`. See: https://cmake.org/cmake/help/latest/module/FindPkgConfig.html
+# * To find `gptl.pc` ensure it is on the (colon-separated) directories listed in standard pkg-config
+#   environment variable `PKG_CONFIG_PATH`.
+#    * See: https://linux.die.net/man/1/pkg-config
+# * A working GPTL pkg-config install can be confirmed on the command line
+#   ```
+#   $ pkg-config --modversion gptl
+#   8.0.2
+#   ```
+# To set a non-standard location for GPTL, ensure the correct `gptl.pc` pkg config file is found first
+# on the environment's `PKG_CONFIG_PATH`. This can be checked with the pkg-config executable, e.g.,
+#  ```
+#  $ pkg-config --variable=prefix gptl
+#  /usr/local
+#  ```
+# Only if pkg-config is not supported or available, GPTL will be searched by the standard CMake search procedures.
+# Set environment or CMake variable GPTL_ROOT to control this search.  The GPTL_ROOT variable will have no effect
+# if GPTL_HAS_PKG_CONFIG=True.
 #
 
 find_package(PkgConfig QUIET)
+if(PKG_CONFIG_FOUND)
+    message(DEBUG "[FindGPTL] Using PKG_CONFIG_EXECUTABLE:${PKG_CONFIG_EXECUTABLE}")
+endif()
 
 #Helper:
 #check_pkg_config(ret_var pcname pcflags...)
@@ -29,7 +58,6 @@ function(check_pkg_config ret_var pcname)
         set(${ret_var} False PARENT_SCOPE)
     else()
         execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} --exists ${pcname} RESULT_VARIABLE _found)
-        message(STATUS "FOUND: ${_found}")
         if(_found EQUAL 0)
             set(${ret_var} True PARENT_SCOPE)
         else()
@@ -55,15 +83,18 @@ function(get_pkg_config ret_var pcname pcflags)
     endif()
 endfunction()
 
-#Attempt to use pkg-config to get as much information as possible
 check_pkg_config(GPTL_HAS_PKG_CONFIG gptl)
 if(GPTL_HAS_PKG_CONFIG)
+    #Use pkg-config to find the prefix, flags, directories, executables, and libraries
     get_pkg_config(GPTL_VERSION_STRING gptl --modversion)
     get_pkg_config(GPTL_PREFIX gptl --variable=prefix)
     get_pkg_config(GPTL_INCLUDE_DIR gptl --cflags-only-I)
-    if(GPTL_INCLUDE_DIR)
+    if(EXISTS GPTL_INCLUDE_DIR)
         string(REGEX REPLACE "-I([^ ]+)" "\\1;" GPTL_INCLUDE_DIR ${GPTL_INCLUDE_DIR}) #Remove -I
+    else()
+        find_path(GPTL_INCLUDE_DIR NAMES gptl.h PATH_SUFFIXES include include/gptl PATHS ${GPTL_PREFIX} NO_DEFAULT_PATH)
     endif()
+    find_path(GPTL_MODULE_DIR NAMES gptl.mod PATH_SUFFIXES include include/gptl module module/gptl PATHS ${GPTL_PREFIX} NO_DEFAULT_PATH)
     get_pkg_config(GPTL_COMPILE_OPTIONS gptl --cflags-only-other)
     get_pkg_config(GPTL_LINK_LIBRARIES gptl --libs-only-l)
     get_pkg_config(GPTL_LINK_DIRECTORIES gptl --libs-only-L)
@@ -71,16 +102,37 @@ if(GPTL_HAS_PKG_CONFIG)
         string(REGEX REPLACE "-L([^ ]+)" "\\1;" GPTL_LINK_DIRECTORIES ${GPTL_LINK_DIRECTORIES}) #Remove -L
     endif()
     get_pkg_config(GPTL_LINK_OPTIONS gptl --libs-only-other)
+    find_library(GPTL_LIBRARY NAMES gptl PATH_SUFFIXES lib lib64 PATHS ${GPTL_PREFIX} NO_DEFAULT_PATH)
+    find_path(GPTL_BIN_DIR NAMES gptl_avail PATH_SUFFIXES bin PATHS ${GPTL_PREFIX} NO_DEFAULT_PATH)
 else()
-    message(WARNING "GPTL: PkgConfig not found.  Unable to query compiler and linker options.  Attempting to find GPTL component paths individually.")
-endif()
-if(NOT GPTL_INCLUDE_DIR)
-    find_path(GPTL_INCLUDE_DIR NAMES gptl.h PATHS ${GPTL_PREFIX_HINTS} PATH_SUFFIXES include include/gptl)
-endif()
-find_path(GPTL_MODULE_DIR NAMES gptl.mod PATHS ${GPTL_PREFIX_HINTS} PATH_SUFFIXES include include/gptl module module/gptl)
-find_path(GPTL_BIN_DIR NAMES gptl_avail PATHS ${GPTL_PREFIX_HINTS} PATH_SUFFIXES bin)
-find_library(GPTL_LIBRARY NAMES gptl PATHS ${GPTL_PREFIX_HINTS} PATH_SUFFIXES lib lib64)
+    #Attempt to find GPTL without pkg-config as last resort.
+    message(WARNING "\
+FindGPTL: The `pkg-config` executable was not found. Ensure it is on your path or set \
+environment variable PKG_CONFIG to your pkg-config executable. \
+Attempting to find GPTL without pkg-config support may cause some required compiler and linker options to be unset.")
 
+    find_path(GPTL_INCLUDE_DIR NAMES gptl.h PATH_SUFFIXES include include/gptl)
+    find_path(GPTL_MODULE_DIR NAMES gptl.mod PATH_SUFFIXES include include/gptl module module/gptl)
+    find_library(GPTL_LIBRARY NAMES gptl PATH_SUFFIXES lib lib64)
+    find_path(GPTL_BIN_DIR NAMES gptl_avail PATH_SUFFIXES bin)
+endif()
+
+#Hide non-documented variables reserved for internal/advanced usage
+mark_as_advanced( GPTL_INCLUDE_DIR
+                  GPTL_MODULE_DIR
+                  GPTL_LIBRARY )
+
+#Debugging output
+message(DEBUG "[FindGPTL] GPTL_FOUND: ${GPTL_FOUND}")
+message(DEBUG "[FindGPTL] GPTL_VERSION_STRING: ${GPTL_VERSION_STRING}")
+message(DEBUG "[FindGPTL] GPTL_PREFIX: ${GPTL_PREFIX}")
+message(DEBUG "[FindGPTL] GPTL_BIN_DIR: ${GPTL_BIN_DIR}")
+message(DEBUG "[FindGPTL] GPTL_INCLUDE_DIR: ${GPTL_INCLUDE_DIR}")
+message(DEBUG "[FindGPTL] GPTL_MODULE_DIR: ${GPTL_MODULE_DIR}")
+message(DEBUG "[FindGPTL] GPTL_LIBRARY: ${GPTL_LIBRARY}")
+message(DEBUG "[FindGPTL] GPTL_LINK_LIBRARIES: ${GPTL_LINK_LIBRARIES}")
+message(DEBUG "[FindGPTL] GPTL_LINK_DIRECTORIES: ${GPTL_LINK_DIRECTORIES}")
+message(DEBUG "[FindGPTL] GPTL_LINK_OPTIONS: ${GPTL_LINK_OPTIONS}")
 
 #Check package has been found correctly
 include(FindPackageHandleStandardArgs)
@@ -94,29 +146,6 @@ find_package_handle_standard_args(
   VERSION_VAR
     GPTL_VERSION_STRING
 )
-
-#Hide non-documented variables reserved for internal/advanced usage
-mark_as_advanced(GPTL_VERSION_STRING
-                 GPTL_PREFIX
-                 GPTL_INCLUDE_DIR
-                 GPTL_MODULE_DIR
-                 GPTL_COMPILE_OPTIONS
-                 GPTL_LIBRARY
-                 GPTL_LINK_LIBRARIES
-                 GPTL_LINK_DIRECTORIES
-                 GPTL_LINK_OPTIONS)
-
-#Debugging output
-message(DEBUG "GPTL_FOUND: ${GPTL_FOUND}")
-message(DEBUG "GPTL_VERSION_STRING: ${GPTL_VERSION_STRING}")
-message(DEBUG "GPTL_PREFIX: ${GPTL_PREFIX}")
-message(DEBUG "GPTL_BIN_DIR: ${GPTL_BIN_DIR}")
-message(DEBUG "GPTL_INCLUDE_DIR: ${GPTL_INCLUDE_DIR}")
-message(DEBUG "GPTL_MODULE_DIR: ${GPTL_MODULE_DIR}")
-message(DEBUG "GPTL_LIBRARY: ${GPTL_LIBRARY}")
-message(DEBUG "GPTL_LINK_LIBRARIES: ${GPTL_LINK_LIBRARIES}")
-message(DEBUG "GPTL_LINK_DIRECTORIES: ${GPTL_LINK_DIRECTORIES}")
-message(DEBUG "GPTL_LINK_OPTIONS: ${GPTL_LINK_OPTIONS}")
 
 #Create GPTL::GPTL imported interface target
 if(GPTL_FOUND AND NOT TARGET GPTL::GPTL)
