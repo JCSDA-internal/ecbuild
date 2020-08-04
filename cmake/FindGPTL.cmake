@@ -16,7 +16,7 @@
 #  GPTL::GPTL - Imported interface target to pass to target_link_libraries()
 #
 # NOTE: This find modules uses `pkg-config` to locate GPTL and glean the appropriate flags, directories,
-# and link dependency ordering.  For this to work both a `pkg-config` executable and a `gptl.pc`
+# and link dependency ordering.  For this to work, both a `pkg-config` executable and a `gptl.pc`
 # config file need to be found.
 # * To find the `pkg-config` executable, ensure it is on your PATH.
 #   * For non-standard locations the official CMake FindPkgConfig uses Cmake variable `PKG_CONFIG_EXECUTABLE`
@@ -24,7 +24,7 @@
 # * To find `gptl.pc` ensure it is on the (colon-separated) directories listed in standard pkg-config
 #   environment variable `PKG_CONFIG_PATH`.
 #    * See: https://linux.die.net/man/1/pkg-config
-# * A working GPTL pkg-config install can be confirmed on the command line
+# * A working GPTL pkg-config install can be confirmed on the command line, e.g.,
 #   ```
 #   $ pkg-config --modversion gptl
 #   8.0.2
@@ -35,7 +35,7 @@
 #  $ pkg-config --variable=prefix gptl
 #  /usr/local
 #  ```
-# Only if pkg-config is not supported or available, GPTL will be searched by the standard CMake search procedures.
+# Only when pkg-config is not supported or available, GPTL will be searched by the standard CMake search procedures.
 # Set environment or CMake variable GPTL_ROOT to control this search.  The GPTL_ROOT variable will have no effect
 # if GPTL_HAS_PKG_CONFIG=True.
 #
@@ -117,7 +117,7 @@ Attempting to find GPTL without pkg-config support may cause some required compi
     find_path(GPTL_BIN_DIR NAMES gptl_avail PATH_SUFFIXES bin)
 endif()
 
-#Hide non-documented variables reserved for internal/advanced usage
+#Hide non-documented cache variables reserved for internal/advanced usage
 mark_as_advanced( GPTL_INCLUDE_DIR
                   GPTL_MODULE_DIR
                   GPTL_LIBRARY )
@@ -125,6 +125,7 @@ mark_as_advanced( GPTL_INCLUDE_DIR
 #Debugging output
 message(DEBUG "[FindGPTL] GPTL_FOUND: ${GPTL_FOUND}")
 message(DEBUG "[FindGPTL] GPTL_VERSION_STRING: ${GPTL_VERSION_STRING}")
+message(DEBUG "[FindGPTL] GPTL_HAS_PKG_CONFIG: ${GPTL_HAS_PKG_CONFIG}")
 message(DEBUG "[FindGPTL] GPTL_PREFIX: ${GPTL_PREFIX}")
 message(DEBUG "[FindGPTL] GPTL_BIN_DIR: ${GPTL_BIN_DIR}")
 message(DEBUG "[FindGPTL] GPTL_INCLUDE_DIR: ${GPTL_INCLUDE_DIR}")
